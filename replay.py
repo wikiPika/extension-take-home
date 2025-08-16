@@ -249,6 +249,46 @@ def run_playback(trace: Dict[str, Any], verbose: bool = False) -> int:
         # Ensure scripts are injected on every navigation (CSP-safe)
         page.add_init_script(script=replayer_js)
         page.add_init_script(script=progress_js)
+        # Input guard to reject real user input during playback (but allow synthetic events)
+        guard_js = r"""
+          (function(){
+            if (window.AlteraInputGuard) return;
+            const EVENTS = ['mousedown','mouseup','click','dblclick','contextmenu','mousemove','pointerdown','pointerup','pointermove','touchstart','touchmove','touchend','wheel','keydown','keypress','keyup'];
+            let handlers = [];
+            function addBlockers(){
+              removeBlockers();
+              for (const type of EVENTS){
+                const h = function(e){
+                  try{ if (e && e.isTrusted){ e.stopImmediatePropagation && e.stopImmediatePropagation(); e.stopPropagation(); e.preventDefault(); } }catch{}
+                };
+                window.addEventListener(type, h, { capture:true, passive:false });
+                document.addEventListener(type, h, { capture:true, passive:false });
+                handlers.push([type,h]);
+              }
+              // overlay to swallow pointer hits
+              if (!document.getElementById('__altera_blocker')){
+                const d = document.createElement('div');
+                d.id='__altera_blocker';
+                d.style.position='fixed'; d.style.left='0'; d.style.top='0'; d.style.right='0'; d.style.bottom='0';
+                d.style.zIndex='2147483647'; d.style.pointerEvents='auto'; d.style.background='transparent';
+                d.style.cursor='not-allowed';
+                d.setAttribute('aria-hidden','true');
+                document.documentElement.appendChild(d);
+                d.addEventListener('mousedown', e=>{ if (e.isTrusted){ e.preventDefault(); e.stopPropagation(); } }, { capture:true, passive:false });
+                d.addEventListener('pointerdown', e=>{ if (e.isTrusted){ e.preventDefault(); e.stopPropagation(); } }, { capture:true, passive:false });
+              }
+            }
+            function removeBlockers(){
+              try{
+                for (const [t,h] of handlers){ window.removeEventListener(t,h,true); document.removeEventListener(t,h,true);} handlers=[];
+                const d = document.getElementById('__altera_blocker');
+                if (d && d.parentNode) d.parentNode.removeChild(d);
+              }catch{}
+            }
+            window.AlteraInputGuard = { enable: addBlockers, disable: removeBlockers };
+          })();
+        """
+        page.add_init_script(script=guard_js)
 
         # Verbose console relay
         console_handler = None
@@ -269,6 +309,11 @@ def run_playback(trace: Dict[str, Any], verbose: bool = False) -> int:
         page.goto(start_url, wait_until="load")
         # UX: give the page a moment to settle resources
         page.wait_for_timeout(1000)
+        # Enable input guard (blocks real user input; allows synthetic events)
+        try:
+            page.evaluate("() => (window.AlteraInputGuard && AlteraInputGuard.enable(), true)")
+        except Exception:
+            pass
 
         # Play each segment (rebased timestamps)
         for idx, seg in enumerate(segments):
@@ -276,6 +321,11 @@ def run_playback(trace: Dict[str, Any], verbose: bool = False) -> int:
                 if verbose:
                     print(f"Navigating to segment[{idx}] URL: {seg['url']}")
                 page.goto(seg["url"], wait_until="load")
+                # Re-enable guard after navigation
+                try:
+                    page.evaluate("() => (window.AlteraInputGuard && AlteraInputGuard.enable(), true)")
+                except Exception:
+                    pass
             steps = rebase_steps(seg.get("steps", []))
             if not steps:
                 continue
@@ -300,6 +350,11 @@ def run_playback(trace: Dict[str, Any], verbose: bool = False) -> int:
 
         if verbose:
             print("All segments played.")
+        # Disable input guard so the user can interact after playback
+        try:
+            page.evaluate("() => (window.AlteraInputGuard && AlteraInputGuard.disable(), true)")
+        except Exception:
+            pass
         # UX: Keep the browser open until the user chooses to exit
         print("Replay complete. Browser will remain open. Press Enter to close and exit...")
         try:

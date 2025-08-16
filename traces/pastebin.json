@@ -1,0 +1,360 @@
+{
+  "version": "1.0",
+  "createdAt": "2025-08-16T17:37:14.333Z",
+  "startedAt": "2025-08-16T17:37:08.083Z",
+  "startUrl": "https://pastebin.com/",
+  "startOrigin": "https://pastebin.com",
+  "startTitle": "Pastebin.com - #1 paste tool since 2002!",
+  "baseUrl": "https://pastebin.com",
+  "metadata": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  },
+  "steps": [
+    {
+      "type": "navigate",
+      "url": "https://pastebin.com/",
+      "ts": 3
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "button": "left",
+      "x": 454,
+      "y": 135,
+      "ts": 1183
+    },
+    {
+      "type": "hover",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "x": 454,
+      "y": 135,
+      "ts": 1264
+    },
+    {
+      "type": "type",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "text": "h",
+      "ts": 1373
+    },
+    {
+      "type": "type",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "text": "he",
+      "ts": 1416
+    },
+    {
+      "type": "type",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "text": "hel",
+      "ts": 1650
+    },
+    {
+      "type": "type",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "text": "hell",
+      "ts": 1819
+    },
+    {
+      "type": "type",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "text": "hello",
+      "ts": 2067
+    },
+    {
+      "type": "type",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "text": "hello ",
+      "ts": 2190
+    },
+    {
+      "type": "type",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "text": "hello f",
+      "ts": 2540
+    },
+    {
+      "type": "type",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "text": "hello fr",
+      "ts": 2741
+    },
+    {
+      "type": "type",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "text": "hello frl",
+      "ts": 3398
+    },
+    {
+      "type": "type",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "text": "hello frl!",
+      "ts": 3899
+    },
+    {
+      "type": "type",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "text": "",
+      "ts": 4691
+    },
+    {
+      "type": "hover",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "div:nth-of-type(1) > div:nth-of-type(2) > div:nth-of-type(2) > ul:nth-of-type(1) > li:nth-of-type(1)"
+        },
+        {
+          "type": "text",
+          "value": "Free Giftcards Method\n                \n                                         "
+        }
+      ],
+      "x": 211,
+      "y": 3,
+      "ts": 5406
+    },
+    {
+      "type": "type",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#postform-text"
+        },
+        {
+          "type": "css",
+          "value": "textarea[name=\"PostForm\\[text\\]\"]"
+        },
+        {
+          "type": "aria",
+          "value": "New Paste"
+        },
+        {
+          "type": "css",
+          "value": "#postform-text"
+        }
+      ],
+      "text": "",
+      "ts": 5603
+    }
+  ]
+}

@@ -1,0 +1,1095 @@
+{
+  "version": "1.0",
+  "createdAt": "2025-08-16T17:39:22.946Z",
+  "startedAt": "2025-08-16T17:38:51.358Z",
+  "startUrl": "https://www.piskelapp.com/",
+  "startOrigin": "https://www.piskelapp.com",
+  "startTitle": "Piskel - Free online sprite editor",
+  "baseUrl": "https://www.piskelapp.com",
+  "metadata": {
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+  },
+  "steps": [
+    {
+      "type": "navigate",
+      "url": "https://www.piskelapp.com/",
+      "ts": 2
+    },
+    {
+      "type": "hover",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > a:nth-of-type(1)"
+        },
+        {
+          "type": "text",
+          "value": "Create Sprite"
+        }
+      ],
+      "x": 159,
+      "y": 9,
+      "ts": 1433
+    },
+    {
+      "type": "hover",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > a:nth-of-type(1)"
+        },
+        {
+          "type": "text",
+          "value": "Create Sprite"
+        }
+      ],
+      "x": 159,
+      "y": 9,
+      "ts": 1433
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > a:nth-of-type(1)"
+        },
+        {
+          "type": "text",
+          "value": "Create Sprite"
+        }
+      ],
+      "button": "left",
+      "x": 111,
+      "y": 21,
+      "ts": 1538
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(1) > div:nth-of-type(3) > a:nth-of-type(1)"
+        },
+        {
+          "type": "text",
+          "value": "Create Sprite"
+        }
+      ],
+      "button": "left",
+      "x": 111,
+      "y": 21,
+      "ts": 1538
+    },
+    {
+      "type": "hover",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "x": 330,
+      "y": 269,
+      "ts": 2604
+    },
+    {
+      "type": "drag",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "from": {
+        "x": 180,
+        "y": 328
+      },
+      "to": {
+        "x": 409,
+        "y": 453
+      },
+      "path": [
+        {
+          "x": 404,
+          "y": 374,
+          "dt": 245
+        },
+        {
+          "x": 404,
+          "y": 380,
+          "dt": 278
+        },
+        {
+          "x": 404,
+          "y": 389,
+          "dt": 311
+        },
+        {
+          "x": 404,
+          "y": 398,
+          "dt": 344
+        },
+        {
+          "x": 404,
+          "y": 403,
+          "dt": 378
+        },
+        {
+          "x": 404,
+          "y": 407,
+          "dt": 411
+        },
+        {
+          "x": 404,
+          "y": 413,
+          "dt": 445
+        },
+        {
+          "x": 405,
+          "y": 420,
+          "dt": 477
+        },
+        {
+          "x": 405,
+          "y": 424,
+          "dt": 511
+        },
+        {
+          "x": 406,
+          "y": 428,
+          "dt": 579
+        },
+        {
+          "x": 406,
+          "y": 429,
+          "dt": 611
+        },
+        {
+          "x": 406,
+          "y": 430,
+          "dt": 644
+        },
+        {
+          "x": 407,
+          "y": 433,
+          "dt": 678
+        },
+        {
+          "x": 407,
+          "y": 435,
+          "dt": 711
+        },
+        {
+          "x": 407,
+          "y": 438,
+          "dt": 744
+        },
+        {
+          "x": 408,
+          "y": 441,
+          "dt": 778
+        },
+        {
+          "x": 409,
+          "y": 446,
+          "dt": 811
+        },
+        {
+          "x": 409,
+          "y": 450,
+          "dt": 843
+        },
+        {
+          "x": 409,
+          "y": 452,
+          "dt": 878
+        },
+        {
+          "x": 409,
+          "y": 452,
+          "dt": 911
+        },
+        {
+          "x": 409,
+          "y": 453,
+          "dt": 945
+        },
+        {
+          "x": 409,
+          "y": 453,
+          "dt": 978
+        },
+        {
+          "x": 409,
+          "y": 453,
+          "dt": 1011
+        },
+        {
+          "x": 409,
+          "y": 453,
+          "dt": 1111
+        },
+        {
+          "x": 409,
+          "y": 453,
+          "dt": 1131
+        }
+      ],
+      "targetSelectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "ts": 6406
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 207,
+      "y": 318,
+      "ts": 7457
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 224,
+      "y": 318,
+      "ts": 7878
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 245,
+      "y": 318,
+      "ts": 8312
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 259,
+      "y": 318,
+      "ts": 8725
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 277,
+      "y": 318,
+      "ts": 9203
+    },
+    {
+      "type": "drag",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "from": {
+        "x": 221,
+        "y": 363
+      },
+      "to": {
+        "x": 448,
+        "y": 452
+      },
+      "path": [
+        {
+          "x": 445,
+          "y": 409,
+          "dt": 189
+        },
+        {
+          "x": 445,
+          "y": 412,
+          "dt": 222
+        },
+        {
+          "x": 445,
+          "y": 416,
+          "dt": 255
+        },
+        {
+          "x": 445,
+          "y": 419,
+          "dt": 289
+        },
+        {
+          "x": 445,
+          "y": 422,
+          "dt": 322
+        },
+        {
+          "x": 445,
+          "y": 424,
+          "dt": 355
+        },
+        {
+          "x": 445,
+          "y": 428,
+          "dt": 388
+        },
+        {
+          "x": 445,
+          "y": 432,
+          "dt": 422
+        },
+        {
+          "x": 445,
+          "y": 437,
+          "dt": 455
+        },
+        {
+          "x": 445,
+          "y": 439,
+          "dt": 489
+        },
+        {
+          "x": 445,
+          "y": 441,
+          "dt": 521
+        },
+        {
+          "x": 445,
+          "y": 442,
+          "dt": 554
+        },
+        {
+          "x": 446,
+          "y": 443,
+          "dt": 588
+        },
+        {
+          "x": 446,
+          "y": 445,
+          "dt": 621
+        },
+        {
+          "x": 446,
+          "y": 447,
+          "dt": 654
+        },
+        {
+          "x": 447,
+          "y": 449,
+          "dt": 688
+        },
+        {
+          "x": 447,
+          "y": 450,
+          "dt": 722
+        },
+        {
+          "x": 447,
+          "y": 451,
+          "dt": 754
+        },
+        {
+          "x": 447,
+          "y": 452,
+          "dt": 789
+        },
+        {
+          "x": 447,
+          "y": 452,
+          "dt": 825
+        },
+        {
+          "x": 448,
+          "y": 452,
+          "dt": 860
+        },
+        {
+          "x": 448,
+          "y": 452,
+          "dt": 949
+        }
+      ],
+      "targetSelectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "ts": 11368
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 234,
+      "y": 352,
+      "ts": 12307
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 248,
+      "y": 352,
+      "ts": 12774
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 270,
+      "y": 352,
+      "ts": 13478
+    },
+    {
+      "type": "drag",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "from": {
+        "x": 247,
+        "y": 389
+      },
+      "to": {
+        "x": 473,
+        "y": 450
+      },
+      "path": [
+        {
+          "x": 471,
+          "y": 434,
+          "dt": 6
+        },
+        {
+          "x": 471,
+          "y": 435,
+          "dt": 172
+        },
+        {
+          "x": 471,
+          "y": 439,
+          "dt": 206
+        },
+        {
+          "x": 471,
+          "y": 443,
+          "dt": 239
+        },
+        {
+          "x": 471,
+          "y": 444,
+          "dt": 272
+        },
+        {
+          "x": 471,
+          "y": 446,
+          "dt": 306
+        },
+        {
+          "x": 471,
+          "y": 447,
+          "dt": 339
+        },
+        {
+          "x": 471,
+          "y": 447,
+          "dt": 373
+        },
+        {
+          "x": 471,
+          "y": 448,
+          "dt": 406
+        },
+        {
+          "x": 472,
+          "y": 448,
+          "dt": 439
+        },
+        {
+          "x": 472,
+          "y": 448,
+          "dt": 472
+        },
+        {
+          "x": 472,
+          "y": 448,
+          "dt": 505
+        },
+        {
+          "x": 472,
+          "y": 449,
+          "dt": 539
+        },
+        {
+          "x": 473,
+          "y": 449,
+          "dt": 572
+        },
+        {
+          "x": 473,
+          "y": 450,
+          "dt": 606
+        },
+        {
+          "x": 473,
+          "y": 450,
+          "dt": 639
+        }
+      ],
+      "targetSelectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "ts": 14854
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 272,
+      "y": 390,
+      "ts": 15657
+    },
+    {
+      "type": "drag",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "from": {
+        "x": 182,
+        "y": 441
+      },
+      "to": {
+        "x": 505,
+        "y": 483
+      },
+      "path": [
+        {
+          "x": 410,
+          "y": 486,
+          "dt": 209
+        },
+        {
+          "x": 420,
+          "y": 486,
+          "dt": 242
+        },
+        {
+          "x": 431,
+          "y": 486,
+          "dt": 273
+        },
+        {
+          "x": 440,
+          "y": 486,
+          "dt": 306
+        },
+        {
+          "x": 448,
+          "y": 486,
+          "dt": 338
+        },
+        {
+          "x": 453,
+          "y": 486,
+          "dt": 371
+        },
+        {
+          "x": 458,
+          "y": 486,
+          "dt": 405
+        },
+        {
+          "x": 463,
+          "y": 486,
+          "dt": 438
+        },
+        {
+          "x": 469,
+          "y": 486,
+          "dt": 471
+        },
+        {
+          "x": 473,
+          "y": 486,
+          "dt": 505
+        },
+        {
+          "x": 478,
+          "y": 485,
+          "dt": 538
+        },
+        {
+          "x": 482,
+          "y": 485,
+          "dt": 571
+        },
+        {
+          "x": 488,
+          "y": 484,
+          "dt": 605
+        },
+        {
+          "x": 493,
+          "y": 484,
+          "dt": 638
+        },
+        {
+          "x": 497,
+          "y": 484,
+          "dt": 671
+        },
+        {
+          "x": 501,
+          "y": 484,
+          "dt": 704
+        },
+        {
+          "x": 503,
+          "y": 483,
+          "dt": 737
+        },
+        {
+          "x": 505,
+          "y": 483,
+          "dt": 772
+        },
+        {
+          "x": 506,
+          "y": 483,
+          "dt": 805
+        },
+        {
+          "x": 507,
+          "y": 483,
+          "dt": 838
+        },
+        {
+          "x": 506,
+          "y": 483,
+          "dt": 1005
+        },
+        {
+          "x": 505,
+          "y": 483,
+          "dt": 1026
+        }
+      ],
+      "targetSelectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "ts": 18311
+    },
+    {
+      "type": "drag",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "from": {
+        "x": 309,
+        "y": 319
+      },
+      "to": {
+        "x": 537,
+        "y": 468
+      },
+      "path": [
+        {
+          "x": 533,
+          "y": 366,
+          "dt": 222
+        },
+        {
+          "x": 533,
+          "y": 373,
+          "dt": 255
+        },
+        {
+          "x": 533,
+          "y": 382,
+          "dt": 289
+        },
+        {
+          "x": 533,
+          "y": 391,
+          "dt": 322
+        },
+        {
+          "x": 533,
+          "y": 397,
+          "dt": 359
+        },
+        {
+          "x": 534,
+          "y": 401,
+          "dt": 392
+        },
+        {
+          "x": 534,
+          "y": 405,
+          "dt": 426
+        },
+        {
+          "x": 535,
+          "y": 409,
+          "dt": 459
+        },
+        {
+          "x": 535,
+          "y": 412,
+          "dt": 492
+        },
+        {
+          "x": 536,
+          "y": 416,
+          "dt": 526
+        },
+        {
+          "x": 537,
+          "y": 422,
+          "dt": 559
+        },
+        {
+          "x": 537,
+          "y": 430,
+          "dt": 592
+        },
+        {
+          "x": 537,
+          "y": 436,
+          "dt": 625
+        },
+        {
+          "x": 537,
+          "y": 440,
+          "dt": 659
+        },
+        {
+          "x": 538,
+          "y": 442,
+          "dt": 692
+        },
+        {
+          "x": 538,
+          "y": 443,
+          "dt": 726
+        },
+        {
+          "x": 538,
+          "y": 444,
+          "dt": 759
+        },
+        {
+          "x": 538,
+          "y": 445,
+          "dt": 792
+        },
+        {
+          "x": 538,
+          "y": 448,
+          "dt": 826
+        },
+        {
+          "x": 538,
+          "y": 450,
+          "dt": 859
+        },
+        {
+          "x": 538,
+          "y": 453,
+          "dt": 892
+        },
+        {
+          "x": 538,
+          "y": 456,
+          "dt": 926
+        },
+        {
+          "x": 538,
+          "y": 459,
+          "dt": 959
+        },
+        {
+          "x": 538,
+          "y": 462,
+          "dt": 992
+        },
+        {
+          "x": 538,
+          "y": 464,
+          "dt": 1026
+        },
+        {
+          "x": 538,
+          "y": 465,
+          "dt": 1059
+        },
+        {
+          "x": 538,
+          "y": 466,
+          "dt": 1092
+        },
+        {
+          "x": 538,
+          "y": 466,
+          "dt": 1126
+        },
+        {
+          "x": 538,
+          "y": 467,
+          "dt": 1159
+        },
+        {
+          "x": 538,
+          "y": 467,
+          "dt": 1193
+        },
+        {
+          "x": 538,
+          "y": 467,
+          "dt": 1226
+        },
+        {
+          "x": 538,
+          "y": 468,
+          "dt": 1259
+        },
+        {
+          "x": 538,
+          "y": 468,
+          "dt": 1292
+        },
+        {
+          "x": 537,
+          "y": 468,
+          "dt": 1359
+        },
+        {
+          "x": 537,
+          "y": 468,
+          "dt": 1392
+        }
+      ],
+      "targetSelectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "ts": 22028
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 323,
+      "y": 452,
+      "ts": 23124
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 311,
+      "y": 469,
+      "ts": 23636
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 321,
+      "y": 477,
+      "ts": 24232
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 336,
+      "y": 464,
+      "ts": 24711
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 350,
+      "y": 495,
+      "ts": 25423
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 358,
+      "y": 485,
+      "ts": 26082
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 359,
+      "y": 517,
+      "ts": 26611
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 372,
+      "y": 505,
+      "ts": 27365
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 373,
+      "y": 535,
+      "ts": 27952
+    },
+    {
+      "type": "click",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#drawing-canvas-container > canvas:nth-of-type(4)"
+        }
+      ],
+      "button": "left",
+      "x": 389,
+      "y": 520,
+      "ts": 28511
+    },
+    {
+      "type": "hover",
+      "selectors": [
+        {
+          "type": "css",
+          "value": "#column-wrapper > div:nth-of-type(3)"
+        },
+        {
+          "type": "text",
+          "value": "1x\n      6x\n      Full\n    \n    \n    \n  \n\n  \n    \n  \n\n\n  \n  12 FPS\n  \n\n\n\n\n      "
+        }
+      ],
+      "x": 2,
+      "y": 329,
+      "ts": 29827
+    }
+  ]
+}

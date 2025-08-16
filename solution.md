@@ -28,10 +28,16 @@ We use Playwright as that's the most straightforward option. The replay script f
 2. source .venv/bin/activate
 3. run `python3 replay.py --file TRACENAME` (optional `-v` for verbose)
 
-note: this may trigger google's "weird ass behavior" captcha guard, as playwright is a bot on unbranded chromium.
+Note: this may trigger google's "weird ass behavior" captcha guard, as playwright is a bot on unbranded chromium.
 
-### ChatGPT trace
+**Caution**: Do not move the mouse inside of the launched Chromium window. Weird things will happen with mouse events, particularly drag events.
 
-Please select ChatGPT 5 (no thinking, no thoughts, head empty) for the trace.
+### ChatGPT Doesn't F**king Work
 
 ChatGPT's website is kind of dumb, when you press (+) then "more" to get web search, clicking on "more" itself will actually just close the entire dropdown. I think that's unexpected behavior (it really should keep the "more" hover popover permanently open instead or something) - so unexpected that chrome devtools recorder itself cannot properly emulate it (LOL) (it fails with 5000 ms timeout).
+
+I tried simulating a conversation (just in general) but Chromium (what Playwright uses) triggers GPT-5's stupid "sign up for our thing now!!!" dialog box (can't be canceled by the way, used to not be there)
+
+### Most Things Don't Work Either
+
+Everything triggers some captcha or some "you're using a robot to automate things noooooo" so I found soe 
