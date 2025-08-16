@@ -86,6 +86,22 @@
     }, 250));
   }
 
+  function onKeyDown(ev) {
+    if (!recording) return;
+    if (ev.key !== 'Enter') return;
+    if (ev.shiftKey || ev.ctrlKey || ev.metaKey || ev.altKey) return;
+    const el = ev.target;
+    // Treat Enter in single-line text inputs as submit intent; ignore textarea/contenteditable (newline)
+    if (el instanceof HTMLInputElement && ['text','search','email','url','tel','number'].includes(el.type)) {
+      // Flush pending debounce for this element
+      const pending = debounces.get(el);
+      if (pending) { clearTimeout(pending); debounces.delete(el); }
+      const val = el.value;
+      const step = { type: 'type', selectors: selectorsFor(el), text: String(val || ''), submit: true, ts: nowRel() };
+      sendStep(step);
+    }
+  }
+
   function onChange(ev) {
     if (!recording) return;
     const el = ev.target;
@@ -136,6 +152,7 @@
     sendStep({ type: 'navigate', url: location.href, ts: 0 });
     window.addEventListener('click', onClick, true);
     window.addEventListener('input', onInput, true);
+    window.addEventListener('keydown', onKeyDown, true);
     window.addEventListener('change', onChange, true);
     window.addEventListener('scroll', onWindowScroll, true);
     patchHistory();
@@ -146,6 +163,7 @@
     recording = false;
     window.removeEventListener('click', onClick, true);
     window.removeEventListener('input', onInput, true);
+    window.removeEventListener('keydown', onKeyDown, true);
     window.removeEventListener('change', onChange, true);
     window.removeEventListener('scroll', onWindowScroll, true);
     debounces.forEach((t) => clearTimeout(t));
@@ -158,4 +176,3 @@
     if (msg.type === 'stopRecording') stop();
   });
 })();
-
