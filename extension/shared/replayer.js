@@ -37,6 +37,14 @@
         if (sel && sel.type === 'css') {
           const el = document.querySelector(sel.value);
           if (el) return el;
+        } else if (sel && sel.type === 'aria') {
+          // Basic ARIA name lookup via aria-label/title text
+          const target = String(sel.value || '').toLowerCase();
+          const candidates = document.querySelectorAll('[aria-label], [title], button, [role="button"]');
+          for (const c of candidates) {
+            const name = (c.getAttribute('aria-label') || c.getAttribute('title') || c.textContent || '').trim().toLowerCase();
+            if (name && (name === target || name.includes(target))) return c;
+          }
         } else if (sel && sel.type === 'text') {
           const el = findByText(document, sel.value);
           if (el) return el;
@@ -116,7 +124,18 @@
       const el = findElement(step.selectors);
       if (!el) throw new Error('click target not found');
       el.scrollIntoView({ block: 'center', inline: 'center' });
-      el.click();
+      if (typeof step.x === 'number' && typeof step.y === 'number') {
+        const rect = el.getBoundingClientRect();
+        const clientX = rect.left + step.x;
+        const clientY = rect.top + step.y;
+        const opts = { bubbles: true, cancelable: true, composed: true, clientX, clientY, button: (step.button === 'right' ? 2 : step.button === 'middle' ? 1 : 0) };
+        el.dispatchEvent(new MouseEvent('mousemove', opts));
+        el.dispatchEvent(new MouseEvent('mousedown', opts));
+        el.dispatchEvent(new MouseEvent('mouseup', opts));
+        el.dispatchEvent(new MouseEvent('click', opts));
+      } else {
+        el.click();
+      }
       return;
     }
     if (type === 'type') {

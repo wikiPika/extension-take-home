@@ -238,11 +238,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         if (tab?.id) targetTabId = tab.id;
       }
       // Inject content script and start
+      const startedAtIso = new Date().toISOString();
       if (targetTabId != null) {
         await chrome.scripting.executeScript({ target: { tabId: targetTabId }, files: ["content.js"] });
-        await chrome.tabs.sendMessage(targetTabId, { type: 'startRecording' }).catch(() => {});
+        await chrome.tabs.sendMessage(targetTabId, { type: 'startRecording', startedAt: startedAtIso, initial: true }).catch(() => {});
       }
-      await setRecordingStarted(new Date().toISOString(), tabInfo, targetTabId);
+      await setRecordingStarted(startedAtIso, tabInfo, targetTabId);
       return sendResponse({ ok: true, status: "recording", site: tabInfo?.origin || tabInfo?.url || null });
     }
     if (message.type === "stop") {
@@ -390,3 +391,16 @@ async function controlPlayback(cmd, arg) {
   });
   return result || { ok: false, error: 'Unknown control error' };
 }
+
+// Re-inject recorder after full navigations in the recorded tab
+chrome.tabs.onUpdated.addListener(async (tabId, info, tab) => {
+  try {
+    if (!inMemory.recording) return;
+    if (inMemory.tabId == null || tabId !== inMemory.tabId) return;
+    if (info.status !== 'complete') return;
+    const startedAtIso = await getStartedAt();
+    // Re-inject and resume recording with the original startedAt to keep timestamps relative to start
+    await chrome.scripting.executeScript({ target: { tabId }, files: ["content.js"] });
+    await chrome.tabs.sendMessage(tabId, { type: 'startRecording', startedAt: startedAtIso, initial: false }).catch(() => {});
+  } catch (_) {}
+});
