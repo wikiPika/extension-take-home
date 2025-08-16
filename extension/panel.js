@@ -243,6 +243,13 @@
     traceSummary.textContent = 'Cleared loaded trace.';
     setPlayEnabled(false);
     clearTimeline();
+    // Immediately stop playback if it's running
+    chrome.runtime.sendMessage({ type: 'replayStop' }, () => {
+      // Ignore errors; reflect stopped state in UI
+      isPlaying = false;
+      isPaused = false;
+      setPlayPauseUI();
+    });
   });
 
   function setPlayPauseUI() {
