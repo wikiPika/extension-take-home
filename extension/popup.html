@@ -52,6 +52,16 @@
       <button id="stopBtn" class="stop">Stop</button>
     </div>
     <div id="status" class="status">Idle</div>
+    <hr />
+    <h1>Load Trace</h1>
+    <div class="row" style="align-items: center;">
+      <select id="traceSelect" style="flex: 1; padding: 6px;">
+        <option value="">-- Select a trace from Downloads/traces --</option>
+      </select>
+      <button id="refreshBtn" title="Refresh">⟳</button>
+      <button id="loadBtn">Load</button>
+    </div>
+    <div id="traceSummary" class="status"></div>
     <script src="popup.js"></script>
   </body>
 </html>

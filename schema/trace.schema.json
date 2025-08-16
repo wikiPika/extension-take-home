@@ -8,7 +8,10 @@
     "version": { "type": "string" },
     "createdAt": { "type": "string", "description": "ISO-8601 timestamp for when the trace file was created" },
     "startedAt": { "type": "string", "description": "ISO-8601 timestamp for when recording started (optional)" },
-    "baseUrl": { "type": "string" },
+    "baseUrl": { "type": "string", "description": "Base site/origin used for replay (usually the origin of startUrl)" },
+    "startUrl": { "type": "string", "description": "The full URL of the active tab when Start was pressed" },
+    "startOrigin": { "type": "string", "description": "Origin of startUrl (protocol+host+port)" },
+    "startTitle": { "type": "string", "description": "Tab title when Start was pressed" },
     "metadata": {
       "type": "object",
       "properties": {

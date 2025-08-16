@@ -6,6 +6,9 @@
   "action": {
     "default_title": "Altera Recorder",
     "default_popup": "popup.html"
-  }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": ["downloads", "storage", "tabs"]
 }
-

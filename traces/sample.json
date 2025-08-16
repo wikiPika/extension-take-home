@@ -6,6 +6,10 @@
     "userAgent": "Mozilla/5.0",
     "viewport": { "width": 1280, "height": 800 }
   },
+  "startUrl": "https://example.com/",
+  "startOrigin": "https://example.com",
+  "startTitle": "Example Domain",
+  "baseUrl": "https://example.com",
   "steps": [
     { "type": "navigate", "url": "https://example.com", "ts": 0 },
     { "type": "wait", "for": { "selector": "h1", "state": "visible" }, "ts": 1000 },
