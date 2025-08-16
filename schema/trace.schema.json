@@ -64,7 +64,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["navigate", "click", "type", "change", "select", "scroll", "wait", "submit", "hover"]
+          "enum": ["navigate", "click", "type", "change", "select", "scroll", "wait", "submit", "hover", "key"]
         },
         "ts": { "type": "number", "description": "Milliseconds since recording started (relative ms)" },
         "frame": { "type": "string" },
@@ -179,6 +179,20 @@
               "selectors": { "$ref": "#/$defs/selectors" },
               "x": { "type": "number" },
               "y": { "type": "number" }
+            }
+          }
+        }
+        ,
+        {
+          "if": { "properties": { "type": { "const": "key" } } },
+          "then": {
+            "required": ["key"],
+            "properties": {
+              "key": { "type": "string" },
+              "action": { "type": "string", "enum": ["press","down","up"], "default": "press" },
+              "modifiers": { "type": "array", "items": { "type": "string", "enum": ["Alt", "Control", "Meta", "Shift"] } },
+              "repeat": { "type": "boolean" },
+              "selectors": { "$ref": "#/$defs/selectors" }
             }
           }
         }

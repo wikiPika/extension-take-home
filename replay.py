@@ -15,6 +15,7 @@ ALLOWED_STEP_TYPES = {
     "wait",
     "submit",
     "hover",
+    "key",
 }
 
 
@@ -108,6 +109,9 @@ def validate_trace_structure(trace: Dict[str, Any]) -> List[str]:
         elif stype == "hover":
             if not _is_selector_list(step.get("selectors")):
                 errors.append(f"{prefix}.selectors must be a non-empty selector list.")
+        elif stype == "key":
+            if not isinstance(step.get("key"), str):
+                errors.append(f"{prefix}.key must be a string.")
 
     return errors
 

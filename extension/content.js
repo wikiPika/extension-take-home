@@ -5,6 +5,7 @@
   let recordedFirstNavigate = false;
   const debounces = new Map(); // element -> { timer, last }
   const TYPE_MIN_INTERVAL_MS = 1000;
+  let suppressScrollUntil = 0;
 
   const nowRel = () => {
     if (!startedAtMs) return 0;
@@ -304,6 +305,32 @@
     }
   }
 
+  function onKeyAny(ev) {
+    if (!recording) return;
+    // Avoid double-capturing Enter here (handled elsewhere for submit)
+    if (ev.key === 'Enter') return;
+    // If user is typing into a text field, prefer value aggregation over raw key events
+    if (isTextInput(ev.target)) return;
+    // Record all keydown events (simple model)
+    const mods = [];
+    if (ev.altKey) mods.push('Alt');
+    if (ev.ctrlKey) mods.push('Control');
+    if (ev.metaKey) mods.push('Meta');
+    if (ev.shiftKey) mods.push('Shift');
+    const step = {
+      type: 'key',
+      key: ev.key,
+      action: 'press',
+      modifiers: mods,
+      selectors: selectorsFor(ev.target),
+      ts: nowRel(),
+    };
+    // Suppress immediate window scroll recording caused by navigation keys
+    const scrollKeys = new Set(['ArrowUp','ArrowDown','PageUp','PageDown','Home','End',' ','Space','Spacebar']);
+    if (scrollKeys.has(ev.key)) suppressScrollUntil = Date.now() + 400;
+    sendStep(step);
+  }
+
   function onBeforeUnload() {
     try {
       if (!recording) return;
@@ -382,6 +409,7 @@
   let lastWinScrollAt = 0;
   function onWindowScroll() {
     if (!recording) return;
+    if (Date.now() < suppressScrollUntil) return;
     const now = performance.now();
     if (now - lastWinScrollAt < 300) return;
     lastWinScrollAt = now;
@@ -444,6 +472,7 @@
     window.addEventListener("click", onClick, true);
     window.addEventListener("input", onInput, true);
     window.addEventListener("keydown", onKeyDown, true);
+    window.addEventListener("keydown", onKeyAny, true);
     window.addEventListener("keypress", onKeyPress, true);
     window.addEventListener("keyup", onKeyUp, true);
     window.addEventListener("submit", onSubmit, true);
@@ -462,6 +491,7 @@
     window.removeEventListener("click", onClick, true);
     window.removeEventListener("input", onInput, true);
     window.removeEventListener("keydown", onKeyDown, true);
+    window.removeEventListener("keydown", onKeyAny, true);
     window.removeEventListener("keypress", onKeyPress, true);
     window.removeEventListener("keyup", onKeyUp, true);
     window.removeEventListener("submit", onSubmit, true);

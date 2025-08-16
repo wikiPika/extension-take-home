@@ -145,6 +145,27 @@
     throw new Error(`Timeout waiting for selector (${typeof selector === 'string' ? selector : JSON.stringify(selector)})`);
   }
 
+  function simpleHover(el, x, y) {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const clientX = rect.left + (typeof x === 'number' ? x : rect.width / 2);
+    const clientY = rect.top + (typeof y === 'number' ? y : rect.height / 2);
+    const common = { bubbles: true, cancelable: true, composed: true, clientX, clientY, pointerId: 1, isPrimary: true, buttons: 0 };
+    try {
+      el.dispatchEvent(new PointerEvent('pointerover', { ...common, pointerType: 'mouse' }));
+      el.dispatchEvent(new MouseEvent('mouseover', common));
+      el.dispatchEvent(new PointerEvent('pointerenter', { ...common, pointerType: 'mouse' }));
+      el.dispatchEvent(new MouseEvent('mouseenter', common));
+      el.dispatchEvent(new PointerEvent('pointermove', { ...common, pointerType: 'mouse' }));
+      el.dispatchEvent(new MouseEvent('mousemove', common));
+    } catch (e) {
+      // Best-effort; ignore if PointerEvent not supported in environment
+      el.dispatchEvent(new MouseEvent('mouseover', common));
+      el.dispatchEvent(new MouseEvent('mouseenter', common));
+      el.dispatchEvent(new MouseEvent('mousemove', common));
+    }
+  }
+
   let lastHoverEl = null;
   function ancestors(el) {
     const list = [];
@@ -175,7 +196,7 @@
     const rect = el.getBoundingClientRect();
     const clientX = rect.left + (typeof x === 'number' ? x : rect.width / 2);
     const clientY = rect.top + (typeof y === 'number' ? y : rect.height / 2);
-    const common = { bubbles: true, cancelable: true, composed: true, clientX, clientY };
+    const common = { bubbles: true, cancelable: true, composed: true, clientX, clientY, pointerId: 1, isPrimary: true, buttons: 0 };
     const prevChain = lastHoverEl ? ancestors(lastHoverEl) : [];
     const nextChain = ancestors(el);
     // Out events for elements not in next chain
@@ -201,6 +222,27 @@
     el.dispatchEvent(new PointerEvent('pointermove', { ...common, pointerType: 'mouse' }));
     el.dispatchEvent(new MouseEvent('mousemove', common));
     lastHoverEl = el;
+  }
+
+  async function hoverOpenSubmenu(target, x, y, timeout = 1500) {
+    const hasPopup = target.getAttribute && target.getAttribute('aria-haspopup') === 'menu';
+    const controlsId = target.getAttribute ? target.getAttribute('aria-controls') : null;
+    const start = performance.now();
+    while (performance.now() - start < timeout) {
+      dispatchHover(target, x, y);
+      // Consider menu open if aria-expanded true, data-state=open, or controlled element visible
+      const expanded = target.getAttribute && target.getAttribute('aria-expanded') === 'true';
+      const dataOpen = target.getAttribute && target.getAttribute('data-state') === 'open';
+      let controlledVisible = false;
+      if (controlsId) {
+        const idSel = '#' + (window.CSS && CSS.escape ? CSS.escape(controlsId) : controlsId.replace(/([ #;?%&,.+*~\':"!^$\[\]()=>|\/])/g,'\\$1'));
+        const el = deepQuerySelector(idSel);
+        controlledVisible = !!(el && isVisible(el));
+      }
+      if ((hasPopup && (expanded || controlledVisible || dataOpen))) return true;
+      await sleep(50);
+    }
+    return false;
   }
 
   async function performStep(step, opts = {}) {
@@ -243,49 +285,108 @@
       return;
     }
     if (type === 'hover') {
-      let el = await waitForElement(step.selectors, { visible: true, timeout: 3000 });
-      if (!el) throw new Error('hover target not found');
-      const target = nearestInteractive(el) || el;
-      target.scrollIntoView({ block: 'center', inline: 'center' });
-      dispatchHover(target, step.x, step.y);
-      // If this is a menu trigger (has submenu), wait for its controlled menu to appear
-      const hasPopup = target.getAttribute && target.getAttribute('aria-haspopup') === 'menu';
-      const controlsId = target.getAttribute ? target.getAttribute('aria-controls') : null;
-      if (hasPopup && controlsId) {
-        // Try to wait for the submenu root
-        const cssId = '#' + (window.CSS && CSS.escape ? CSS.escape(controlsId) : controlsId.replace(/([ #;?%&,.+*~\':"!^$\[\]()=>|\/])/g,'\\$1'));
-        await waitForElement([{ type:'css', value: cssId }], { visible: true, timeout: 2000 }).catch(() => {});
-      } else {
-        await sleep(200);
-      }
+      const el = findElement(step.selectors);
+      if (!el) return; // keep simple, do not fail on hover
+      el.scrollIntoView({ block: 'center', inline: 'center' });
+      simpleHover(el, step.x, step.y);
+      await sleep(100);
       return;
     }
     if (type === 'click') {
-      let el = await waitForElement(step.selectors, { visible: true, timeout: 3000 });
+      const el = findElement(step.selectors);
       if (!el) throw new Error('click target not found');
-      const target = nearestInteractive(el) || el;
-      target.scrollIntoView({ block: 'center', inline: 'center' });
-      // Ensure hover preconditions to trigger popovers/menus
-      dispatchHover(target, step.x, step.y);
-      await sleep(100);
+      el.scrollIntoView({ block: 'center', inline: 'center' });
       if (typeof step.x === 'number' && typeof step.y === 'number') {
-        const rect = target.getBoundingClientRect();
+        const rect = el.getBoundingClientRect();
         const clientX = rect.left + step.x;
         const clientY = rect.top + step.y;
         const opts = { bubbles: true, cancelable: true, composed: true, clientX, clientY, button: (step.button === 'right' ? 2 : step.button === 'middle' ? 1 : 0) };
-        target.dispatchEvent(new PointerEvent('pointerdown', { ...opts, pointerType: 'mouse' }));
-        target.dispatchEvent(new MouseEvent('mousemove', opts));
-        target.dispatchEvent(new MouseEvent('mousedown', opts));
-        target.dispatchEvent(new MouseEvent('mouseup', opts));
-        target.dispatchEvent(new PointerEvent('pointerup', { ...opts, pointerType: 'mouse' }));
-        target.dispatchEvent(new MouseEvent('click', opts));
+        el.dispatchEvent(new PointerEvent('pointerdown', { ...opts, pointerType: 'mouse' }));
+        el.dispatchEvent(new MouseEvent('mousemove', opts));
+        el.dispatchEvent(new MouseEvent('mousedown', opts));
+        el.dispatchEvent(new MouseEvent('mouseup', opts));
+        el.dispatchEvent(new PointerEvent('pointerup', { ...opts, pointerType: 'mouse' }));
+        el.dispatchEvent(new MouseEvent('click', opts));
       } else {
-        target.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, composed: true, pointerType: 'mouse' }));
-        target.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, composed: true }));
-        target.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, composed: true }));
-        target.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, composed: true, pointerType: 'mouse' }));
-        target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true }));
+        el.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, composed: true, pointerType: 'mouse' }));
+        el.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, composed: true }));
+        el.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, composed: true }));
+        el.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, composed: true, pointerType: 'mouse' }));
+        el.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true }));
       }
+      return;
+    }
+    if (type === 'key') {
+      const key = step.key;
+      const action = step.action || 'press';
+      const mods = new Set(step.modifiers || []);
+      const repeat = !!step.repeat;
+      const codeMap = {
+        'ArrowLeft': 37, 'ArrowUp': 38, 'ArrowRight': 39, 'ArrowDown': 40,
+        'Enter': 13, 'Escape': 27, 'Esc': 27, 'Tab': 9,
+        'Home': 36, 'End': 35, 'PageUp': 33, 'PageDown': 34,
+        'Backspace': 8, 'Delete': 46, 'Space': 32, ' ': 32
+      };
+      function computeLegacy(k) {
+        if (codeMap[k] != null) return codeMap[k];
+        if (typeof k === 'string' && k.length === 1) {
+          const ch = k.toUpperCase();
+          const code = ch.charCodeAt(0);
+          // A-Z
+          if (code >= 65 && code <= 90) return code;
+          // 0-9
+          if (code >= 48 && code <= 57) return code;
+        }
+        return 0;
+      }
+      function computeCode(k) {
+        if (k.length === 1) {
+          const ch = k.toUpperCase();
+          if (ch >= 'A' && ch <= 'Z') return 'Key' + ch;
+          if (ch >= '0' && ch <= '9') return 'Digit' + ch;
+        }
+        if (k === ' ') return 'Space';
+        return k; // for Arrow*, Enter, etc.
+      }
+      const legacy = computeLegacy(key);
+      const codeStr = computeCode(key);
+      const baseInit = {
+        key,
+        code: codeStr,
+        location: 0,
+        bubbles: true,
+        cancelable: true,
+        composed: true,
+        altKey: mods.has('Alt'),
+        ctrlKey: mods.has('Control'),
+        metaKey: mods.has('Meta'),
+        shiftKey: mods.has('Shift'),
+        repeat
+      };
+      const dispatchKey = (target, type) => {
+        let ev;
+        try {
+          ev = new KeyboardEvent(type, baseInit);
+          // Define legacy props for libraries that check them
+          if (legacy) {
+            try { Object.defineProperty(ev, 'keyCode', { value: legacy }); } catch {}
+            try { Object.defineProperty(ev, 'which', { value: legacy }); } catch {}
+          }
+        } catch {
+          // Fallback minimal event
+          ev = document.createEvent('Event');
+          ev.initEvent(type, true, true);
+        }
+        // Single dispatch on target; event will bubble naturally
+        target.dispatchEvent(ev);
+      };
+      let target = (Array.isArray(step.selectors) && findElement(step.selectors)) || document.activeElement || document.body || document;
+      // Ensure focus on target if possible for component libraries that require focused element
+      try {
+        if (target && typeof target.focus === 'function') target.focus({ preventScroll: true });
+      } catch {}
+      if (action === 'down' || action === 'press') dispatchKey(target, 'keydown');
+      if (action === 'press' || action === 'up') dispatchKey(target, 'keyup');
       return;
     }
     if (type === 'type') {

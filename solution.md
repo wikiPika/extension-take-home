@@ -33,3 +33,5 @@ note: this may trigger google's "weird ass behavior" guard, as playwright is a b
 ### ChatGPT trace
 
 Please select ChatGPT 5 (no thinking, no thoughts, head empty) for the trace.
+
+ChatGPT's website is kind of dumb, when you press (+) then "more" to get web search, clicking on "more" itself will actually just close the entire dropdown. I think that's unexpected behavior (it really should keep the "more" hover popover permanently open instead or something) - so unexpected that chrome devtools recorder itself cannot properly emulate it (LOL) (it fails with 5000 ms timeout).
