@@ -16,6 +16,7 @@ ALLOWED_STEP_TYPES = {
     "submit",
     "hover",
     "key",
+    "drag",
 }
 
 
@@ -112,6 +113,18 @@ def validate_trace_structure(trace: Dict[str, Any]) -> List[str]:
         elif stype == "key":
             if not isinstance(step.get("key"), str):
                 errors.append(f"{prefix}.key must be a string.")
+        elif stype == "drag":
+            if not _is_selector_list(step.get("selectors")):
+                errors.append(f"{prefix}.selectors must be a non-empty selector list.")
+            frm = step.get("from"); to = step.get("to")
+            if not isinstance(frm, dict) or not isinstance(frm.get("x"), (int,float)) or not isinstance(frm.get("y"), (int,float)):
+                errors.append(f"{prefix}.from must have numeric x,y")
+            if not isinstance(to, dict) or not isinstance(to.get("x"), (int,float)) or not isinstance(to.get("y"), (int,float)):
+                errors.append(f"{prefix}.to must have numeric x,y")
+            path = step.get("path")
+            if path is not None:
+                if not isinstance(path, list) or not all(isinstance(p, dict) and isinstance(p.get('x'), (int,float)) and isinstance(p.get('y'), (int,float)) and isinstance(p.get('dt'), (int,float)) for p in path):
+                    errors.append(f"{prefix}.path must be array of {{x,y,dt}}")
 
     return errors
 

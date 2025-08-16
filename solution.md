@@ -28,7 +28,7 @@ We use Playwright as that's the most straightforward option. The replay script f
 2. source .venv/bin/activate
 3. run `python3 replay.py --file TRACENAME` (optional `-v` for verbose)
 
-note: this may trigger google's "weird ass behavior" guard, as playwright is a bot.
+note: this may trigger google's "weird ass behavior" captcha guard, as playwright is a bot on unbranded chromium.
 
 ### ChatGPT trace
 

@@ -316,6 +316,49 @@
       }
       return;
     }
+    if (type === 'drag') {
+      const src = findElement(step.selectors);
+      if (!src) throw new Error('drag source not found');
+      src.scrollIntoView({ block: 'center', inline: 'center' });
+      const from = step.from || { x: 1, y: 1 };
+      const to = step.to || from;
+      const rect = src.getBoundingClientRect();
+      const startX = rect.left + from.x;
+      const startY = rect.top + from.y;
+      const endX = (typeof to.x === 'number') ? (to.x + 0) : startX;
+      const endY = (typeof to.y === 'number') ? (to.y + 0) : startY;
+      const btn = (step.button === 'right' ? 2 : step.button === 'middle' ? 1 : 0);
+      const downOpts = { bubbles: true, cancelable: true, composed: true, clientX: startX, clientY: startY, button: btn };
+      const moveOpts = { bubbles: true, cancelable: true, composed: true, clientX: endX, clientY: endY };
+      try {
+        src.dispatchEvent(new PointerEvent('pointerdown', { ...downOpts, pointerType: 'mouse', buttons: 1, pointerId: 1, isPrimary: true }));
+      } catch {}
+      src.dispatchEvent(new MouseEvent('mousedown', downOpts));
+      // play path if provided (dt in ms relative to step start)
+      const path = Array.isArray(step.path) ? step.path.slice().sort((a,b)=> (a.dt||0)-(b.dt||0)) : [];
+      const t0 = performance.now();
+      const speed = 1; // simple model; align to step timing
+      if (path.length) {
+        for (const p of path) {
+          const targetAt = t0 + (Math.max(0, p.dt || 0) / speed);
+          let now;
+          while ((now = performance.now()) < targetAt) {
+            await new Promise(r=>setTimeout(r, Math.min(16, targetAt - now)));
+          }
+          const move = { bubbles: true, cancelable: true, composed: true, clientX: p.x, clientY: p.y };
+          document.dispatchEvent(new MouseEvent('mousemove', move));
+          try { document.dispatchEvent(new PointerEvent('pointermove', { ...move, pointerType: 'mouse', buttons: 1, pointerId: 1, isPrimary: true })); } catch {}
+        }
+      } else {
+        // simple one-step move; many libs listen on document
+        document.dispatchEvent(new MouseEvent('mousemove', moveOpts));
+        try { document.dispatchEvent(new PointerEvent('pointermove', { ...moveOpts, pointerType: 'mouse', buttons: 1, pointerId: 1, isPrimary: true })); } catch {}
+      }
+      const upOpts = { bubbles: true, cancelable: true, composed: true, clientX: endX, clientY: endY, button: btn };
+      document.dispatchEvent(new MouseEvent('mouseup', upOpts));
+      try { document.dispatchEvent(new PointerEvent('pointerup', { ...upOpts, pointerType: 'mouse', buttons: 0, pointerId: 1, isPrimary: true })); } catch {}
+      return;
+    }
     if (type === 'key') {
       const key = step.key;
       const action = step.action || 'press';

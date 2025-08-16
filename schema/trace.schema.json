@@ -64,7 +64,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["navigate", "click", "type", "change", "select", "scroll", "wait", "submit", "hover", "key"]
+          "enum": ["navigate", "click", "type", "change", "select", "scroll", "wait", "submit", "hover", "key", "drag"]
         },
         "ts": { "type": "number", "description": "Milliseconds since recording started (relative ms)" },
         "frame": { "type": "string" },
@@ -193,6 +193,25 @@
               "modifiers": { "type": "array", "items": { "type": "string", "enum": ["Alt", "Control", "Meta", "Shift"] } },
               "repeat": { "type": "boolean" },
               "selectors": { "$ref": "#/$defs/selectors" }
+            }
+          }
+        }
+        ,
+        {
+          "if": { "properties": { "type": { "const": "drag" } } },
+          "then": {
+            "required": ["selectors", "from", "to"],
+            "properties": {
+              "selectors": { "$ref": "#/$defs/selectors" },
+              "targetSelectors": { "$ref": "#/$defs/selectors" },
+              "button": { "type": "string", "enum": ["left","middle","right"], "default": "left" },
+              "from": { "type": "object", "properties": { "x": {"type":"number"}, "y": {"type":"number"} }, "required": ["x","y"], "additionalProperties": false },
+              "to": { "type": "object", "properties": { "x": {"type":"number"}, "y": {"type":"number"} }, "required": ["x","y"], "additionalProperties": false },
+              "path": {
+                "type": "array",
+                "items": { "type": "object", "properties": { "x": {"type":"number"}, "y": {"type":"number"}, "dt": {"type":"number"} }, "required": ["x","y","dt"], "additionalProperties": false },
+                "minItems": 1
+              }
             }
           }
         }
