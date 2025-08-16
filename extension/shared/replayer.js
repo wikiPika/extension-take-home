@@ -188,5 +188,98 @@
     return { ok: true, steps: steps.length };
   }
 
+  // Controller with pause/resume/seek and progress events via window.postMessage
+  const ctrlState = {
+    playing: false,
+    paused: false,
+    steps: [],
+    baseTs: 0,
+    endTs: 0,
+    idx: 0,
+    currentTs: 0,
+    speed: 1,
+    startWall: 0
+  };
+
+  function emit(kind, data) {
+    try { window.postMessage({ __altera: true, kind, ...data }, '*'); } catch {}
+  }
+
+  async function playControlled(trace, options = {}) {
+    const steps = Array.isArray(trace?.steps) ? trace.steps.slice() : [];
+    if (!steps.length) return { ok: false, error: 'Empty steps' };
+    steps.sort((a, b) => (a.ts || 0) - (b.ts || 0));
+    ctrlState.playing = true;
+    ctrlState.paused = false;
+    ctrlState.steps = steps;
+    ctrlState.baseTs = steps[0].ts || 0;
+    ctrlState.endTs = steps[steps.length - 1].ts || 0;
+    ctrlState.idx = 0;
+    ctrlState.currentTs = ctrlState.baseTs;
+    ctrlState.speed = Number.isFinite(options.speed) && options.speed > 0 ? options.speed : 1;
+    ctrlState.startWall = performance.now();
+    emit('state', { state: 'started', baseTs: ctrlState.baseTs, endTs: ctrlState.endTs });
+
+    while (ctrlState.playing && ctrlState.idx < steps.length) {
+      const step = steps[ctrlState.idx];
+      const target = ctrlState.startWall + ((Math.max(0, (step.ts || 0) - ctrlState.baseTs)) / ctrlState.speed);
+      while (ctrlState.playing) {
+        if (ctrlState.paused) { await sleep(50); continue; }
+        const now = performance.now();
+        const wait = target - now;
+        // Emit smooth progress ticks while waiting for next step
+        const curTs = ctrlState.baseTs + Math.max(0, (now - ctrlState.startWall)) * ctrlState.speed;
+        ctrlState.currentTs = Math.min(curTs, ctrlState.endTs);
+        emit('progress', { ts: ctrlState.currentTs, idx: ctrlState.idx, endTs: ctrlState.endTs });
+        if (wait > 5) { await sleep(Math.min(wait, 50)); continue; }
+        break;
+      }
+      if (!ctrlState.playing) break;
+      await performStep(step, { honorWait: false });
+      ctrlState.currentTs = step.ts || ctrlState.currentTs;
+      emit('progress', { ts: ctrlState.currentTs, idx: ctrlState.idx, endTs: ctrlState.endTs });
+      ctrlState.idx += 1;
+    }
+    // Final progress to end
+    emit('progress', { ts: ctrlState.endTs, idx: ctrlState.idx, endTs: ctrlState.endTs });
+    const finished = ctrlState.idx >= steps.length;
+    ctrlState.playing = false;
+    emit('state', { state: finished ? 'finished' : 'stopped' });
+    return { ok: true, steps: steps.length, finished };
+  }
+
+  function pause() {
+    ctrlState.paused = true;
+    emit('state', { state: 'paused' });
+    return { ok: true };
+  }
+  function resume() {
+    if (!ctrlState.playing) return { ok: false, error: 'not playing' };
+    // align wall clock so next targets are in future from now
+    ctrlState.startWall = performance.now() - ((Math.max(0, ctrlState.currentTs - ctrlState.baseTs)) / ctrlState.speed);
+    ctrlState.paused = false;
+    emit('state', { state: 'resumed' });
+    return { ok: true };
+  }
+  function seek(ts) {
+    if (!ctrlState.steps.length) return { ok: false, error: 'no steps' };
+    const clamped = Math.max(ctrlState.baseTs, Math.min(ts, ctrlState.endTs));
+    ctrlState.currentTs = clamped;
+    // find the first step with ts >= clamped
+    let i = 0;
+    while (i < ctrlState.steps.length && (ctrlState.steps[i].ts || 0) < clamped) i++;
+    ctrlState.idx = i;
+    ctrlState.startWall = performance.now() - ((Math.max(0, ctrlState.currentTs - ctrlState.baseTs)) / ctrlState.speed);
+    emit('progress', { ts: ctrlState.currentTs, idx: ctrlState.idx, endTs: ctrlState.endTs });
+    return { ok: true };
+  }
+  function stop() {
+    ctrlState.playing = false;
+    ctrlState.paused = false;
+    emit('state', { state: 'stopped' });
+    return { ok: true };
+  }
+
   window.AlteraReplayer = { replay };
+  window.AlteraReplayerControl = { play: playControlled, pause, resume, seek, stop };
 })();

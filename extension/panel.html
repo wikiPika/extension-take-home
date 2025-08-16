@@ -1,20 +1,151 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Altera Recorder — Panel</title>
     <style>
-      :root { color-scheme: light; }
-      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 12px; min-width: 360px; }
-      h1 { font-size: 14px; margin: 0 0 8px; }
-      .row { display: flex; gap: 8px; margin-bottom: 6px; }
-      button { padding: 8px 10px; font-size: 13px; border-radius: 6px; border: 1px solid #ccc; cursor: pointer; }
-      button.start { background: #e6f7ff; border-color: #91d5ff; }
-      button.stop { background: #fff1f0; border-color: #ffa39e; }
-      select { flex: 1; padding: 6px; }
-      .status { margin-top: 8px; font-size: 12px; opacity: 0.8; white-space: pre-wrap; }
-      hr { margin: 10px 0; }
+      :root {
+        color-scheme: light;
+      }
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        margin: 0;
+        padding: 12px;
+        min-width: 360px;
+      }
+      h1 {
+        font-size: 14px;
+        margin: 0 0 8px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+      button {
+        padding: 8px 10px;
+        font-size: 13px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        cursor: pointer;
+      }
+      button.start {
+        background: #e6f7ff;
+        border-color: #91d5ff;
+      }
+      button.stop {
+        background: #fff1f0;
+        border-color: #ffa39e;
+      }
+      select {
+        flex: 1;
+        padding: 6px;
+      }
+      .status {
+        margin-top: 8px;
+        font-size: 12px;
+        padding-left: 8px;
+        padding-top: 8px;
+        padding-bottom: 8px;
+        opacity: 0.8;
+        white-space: pre-wrap;
+      }
+      hr {
+        margin: 10px 0;
+      }
+      .timeline-wrap {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        align-items: start;
+      }
+      .timeline {
+        position: relative;
+        height: 360px;
+        border-left: 2px solid #999;
+        background: #fafafa;
+      }
+      .event-item {
+        position: absolute;
+        left: 0px;
+        right: 0;
+        transform: translateY(-50%);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 4px 6px;
+        border-radius: 6px;
+        cursor: default;
+      }
+      .event-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #1890ff;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px #1890ff;
+        transition: transform 120ms ease, box-shadow 120ms ease;
+      }
+      .event-label {
+        font-size: 12px;
+        color: #333;
+      }
+      .event-item:hover {
+        background: rgba(24, 144, 255, 0.08);
+      }
+      .event-item:hover .event-dot {
+        transform: scale(1.2);
+        box-shadow: 0 0 0 2px #69c0ff;
+      }
+      .scrubber-line {
+        position: absolute;
+        left: -2px;
+        width: 2px;
+        background: #fa8c16;
+        box-shadow: 0 0 0 1px rgba(250, 140, 22, 0.25);
+        top: 10px;
+        height: 0;
+      }
+      .scrubber-tip {
+        position: absolute;
+        left: -9px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #fa8c16;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 1px rgba(250, 140, 22, 0.35);
+        cursor: ns-resize;
+        transform: translateY(-50%);
+      }
+      .controller {
+        font-size: 12px;
+        margin-top: 6px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .pill {
+        padding: 2px 6px;
+        border-radius: 12px;
+        background: #f0f0f0;
+      }
+      .timeline-time {
+        font-size: 12px;
+        margin-bottom: 6px;
+        color: #555;
+      }
+      .details {
+        font-size: 12px;
+        white-space: pre-wrap;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 8px;
+        height: 360px;
+        overflow: auto;
+      }
     </style>
   </head>
   <body>
@@ -26,7 +157,7 @@
     <div id="status" class="status">Idle</div>
     <hr />
     <h1>Load Trace</h1>
-    <div class="row" style="align-items: center;">
+    <div class="row" style="align-items: center">
       <select id="traceSelect">
         <option value="">-- Select a trace from Downloads/traces --</option>
       </select>
@@ -35,6 +166,19 @@
       <button id="playBtn" title="Play loaded trace">Play</button>
     </div>
     <div id="traceSummary" class="status"></div>
+    <div class="timeline-wrap" id="timelineWrap" style="display: none">
+      <div>
+        <div class="timeline-time" id="timelineTime">0.00s</div>
+        <div class="timeline" id="timeline"></div>
+        <div class="controller">
+          <span>Status:</span>
+          <span id="playbackState" class="pill">stopped</span>
+        </div>
+      </div>
+      <div class="details" id="eventDetails">
+        Hover over an event to inspect details.
+      </div>
+    </div>
     <script src="panel.js"></script>
   </body>
-  </html>
+</html>

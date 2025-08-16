@@ -261,7 +261,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     if (message.type === 'playLoadedTrace') {
       const res = await playLoadedTrace();
-      return sendResponse(res.ok ? { ok: true, message: `Playback finished (${res.steps || 0} steps).` } : res);
+      return sendResponse(res.ok ? { ok: true, message: `Playback started (${res.steps || 0} steps).` } : res);
+    }
+    if (message.type === 'replayProgress') {
+      const p = message.payload;
+      if (p && p.kind === 'state' && (p.state === 'finished' || p.state === 'stopped')) {
+        if (inMemory.playback) inMemory.playback.running = false;
+      }
+      // Forward to panel views
+      chrome.runtime.sendMessage({ type: 'replayProgress', payload: message.payload }).catch(() => {});
+      return sendResponse({ ok: true });
+    }
+    if (message.type === 'replayPause') {
+      const res = await controlPlayback('pause');
+      return sendResponse(res);
+    }
+    if (message.type === 'replayResume') {
+      const res = await controlPlayback('resume');
+      return sendResponse(res);
+    }
+    if (message.type === 'replaySeek') {
+      const ts = (typeof message.ts === 'number' && isFinite(message.ts)) ? message.ts : null;
+      if (ts == null) return sendResponse({ ok: false, error: 'Invalid seek timestamp' });
+      const res = await controlPlayback('seek', ts);
+      return sendResponse(res);
+    }
+    if (message.type === 'replayStop') {
+      const res = await controlPlayback('stop');
+      inMemory.playback = { tabId: inMemory.playback?.tabId || null, running: false };
+      return sendResponse(res);
     }
     return sendResponse({ ok: false, error: "Unknown type" });
   })();
@@ -322,19 +350,19 @@ async function playLoadedTrace() {
   if (!loadedTrace) return { ok: false, error: 'No loaded trace in session' };
   const siteOk = await ensureOnStartSite(loadedTrace, tid);
   if (!siteOk.ok) return siteOk;
-  // Inject the shared replayer file into the MAIN world so window.AlteraReplayer is accessible
-  await chrome.scripting.executeScript({ target: { tabId: tid }, files: ["shared/replayer.js"], world: 'MAIN' });
-  // Execute the replay in the page context and surface any thrown errors
+  // Inject progress bridge and shared replayer into the content (isolated) world
+  await chrome.scripting.executeScript({ target: { tabId: tid }, files: ["bridge.js"] });
+  await chrome.scripting.executeScript({ target: { tabId: tid }, files: ["shared/replayer.js"] });
+  // Mark playback context immediately so controls work
+  inMemory.playback = { tabId: tid, running: true };
+  // Kick off playback asynchronously (fire-and-forget) so the worker isn't blocked
   const [{ result }] = await chrome.scripting.executeScript({
     target: { tabId: tid },
-    world: 'MAIN',
-    func: async (trace) => {
+    func: (trace) => {
       try {
-        if (!window.AlteraReplayer) {
-          return { ok: false, error: 'Replayer not loaded in page context' };
-        }
-        const res = await window.AlteraReplayer.replay(trace, { realTime: true, speed: 1.0 });
-        return res;
+        if (!window.AlteraReplayerControl) return { ok: false, error: 'Replayer not loaded in page context' };
+        Promise.resolve(window.AlteraReplayerControl.play(trace, { speed: 1.0 }));
+        return { ok: true };
       } catch (e) {
         return { ok: false, error: (e && e.message) ? e.message : String(e) };
       }
@@ -344,4 +372,21 @@ async function playLoadedTrace() {
   return result || { ok: false, error: 'Unknown error during replay' };
 }
 
-// (No-op)
+async function controlPlayback(cmd, arg) {
+  const tid = inMemory.playback?.tabId;
+  if (!tid) return { ok: false, error: 'No playback tab' };
+  const injArgs = (cmd === 'seek') ? [cmd, arg] : [cmd];
+  const [{ result }] = await chrome.scripting.executeScript({
+    target: { tabId: tid },
+    func: (command, value) => {
+      if (!window.AlteraReplayerControl) return { ok: false, error: 'Replayer not loaded' };
+      if (command === 'pause') return window.AlteraReplayerControl.pause();
+      if (command === 'resume') return window.AlteraReplayerControl.resume();
+      if (command === 'seek') return window.AlteraReplayerControl.seek(value);
+      if (command === 'stop') return window.AlteraReplayerControl.stop();
+      return { ok: false, error: 'bad command' };
+    },
+    args: injArgs
+  });
+  return result || { ok: false, error: 'Unknown control error' };
+}
