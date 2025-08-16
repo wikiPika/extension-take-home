@@ -132,10 +132,29 @@
         el.textContent = step.text || '';
         el.dispatchEvent(new Event('input', { bubbles: true }));
       }
-      if (step.submit) {
-        const form = el.closest('form');
-        if (form) form.submit();
+      return;
+    }
+    if (type === 'submit') {
+      // Prefer formSelectors, else derive from the element selectors
+      let form = null;
+      if (Array.isArray(step.formSelectors)) {
+        form = findElement(step.formSelectors);
       }
+      if (!form && Array.isArray(step.selectors)) {
+        const el = findElement(step.selectors);
+        if (el) form = el.closest('form');
+      }
+      if (!form) throw new Error('submit form not found');
+      // If there was an explicit submitter, click it first to mimic user intent
+      if (Array.isArray(step.submitterSelectors)) {
+        const submitter = findElement(step.submitterSelectors);
+        if (submitter && typeof submitter.click === 'function') {
+          submitter.click();
+        }
+      }
+      // Use requestSubmit to fire submit handlers, fallback to submit
+      if (typeof form.requestSubmit === 'function') form.requestSubmit();
+      else form.submit();
       return;
     }
     if (type === 'change' || type === 'select') {

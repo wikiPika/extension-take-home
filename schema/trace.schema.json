@@ -64,7 +64,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["navigate", "click", "type", "change", "select", "scroll", "wait"]
+          "enum": ["navigate", "click", "type", "change", "select", "scroll", "wait", "submit"]
         },
         "ts": { "type": "number", "description": "Milliseconds since recording started (relative ms)" },
         "frame": { "type": "string" },
@@ -156,6 +156,17 @@
                   { "required": ["networkIdle"], "properties": { "networkIdle": { "const": true } }, "additionalProperties": false }
                 ]
               }
+            }
+          }
+        }
+        ,
+        {
+          "if": { "properties": { "type": { "const": "submit" } } },
+          "then": {
+            "required": ["formSelectors"],
+            "properties": {
+              "formSelectors": { "$ref": "#/$defs/selectors" },
+              "submitterSelectors": { "$ref": "#/$defs/selectors" }
             }
           }
         }

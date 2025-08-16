@@ -13,6 +13,7 @@ ALLOWED_STEP_TYPES = {
     "select",
     "scroll",
     "wait",
+    "submit",
 }
 
 
@@ -100,6 +101,9 @@ def validate_trace_structure(trace: Dict[str, Any]) -> List[str]:
             else:
                 if not any(k in wait_for for k in ("selector", "url", "ms", "networkIdle")):
                     errors.append(f"{prefix}.for must include one of selector/url/ms/networkIdle.")
+        elif stype == "submit":
+            if not _is_selector_list(step.get("formSelectors")):
+                errors.append(f"{prefix}.formSelectors must be a non-empty selector list.")
 
     return errors
 
