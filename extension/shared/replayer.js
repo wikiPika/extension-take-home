@@ -73,7 +73,7 @@
     throw new Error(`Timeout waiting for selector (${typeof selector === 'string' ? selector : JSON.stringify(selector)})`);
   }
 
-  async function performStep(step) {
+  async function performStep(step, opts = {}) {
     const type = step.type;
     if (type === 'navigate') {
       // Navigation is handled by the extension; noop here.
@@ -81,7 +81,12 @@
     }
     if (type === 'wait') {
       const f = step.for || {};
-      if ('ms' in f) return sleep(Number(f.ms));
+      if ('ms' in f) {
+        if (opts.honorWait !== false) {
+          return sleep(Number(f.ms));
+        }
+        return;
+      }
       if ('selector' in f) return waitForSelector(f.selector, { state: f.state || 'visible' });
       if ('url' in f) {
         const start = performance.now();
@@ -157,16 +162,31 @@
     if (!steps.length) return { ok: false, error: 'Empty steps' };
     // Run in ts order
     steps.sort((a, b) => (a.ts || 0) - (b.ts || 0));
-    let prevTs = steps[0].ts || 0;
-    for (const step of steps) {
-      const delay = Math.max(0, Math.min(+(options.maxWaitBetweenSteps ?? 800), (step.ts || 0) - prevTs));
-      if (delay) await sleep(delay);
-      await performStep(step);
-      prevTs = step.ts || prevTs;
+    const baseTs = steps[0].ts || 0;
+    const realTime = options.realTime !== false; // default true
+    const speed = Number.isFinite(options.speed) && options.speed > 0 ? options.speed : 1.0;
+    if (realTime) {
+      const startWall = performance.now();
+      for (const step of steps) {
+        const target = startWall + ((Math.max(0, (step.ts || 0) - baseTs)) / speed);
+        const now = performance.now();
+        const wait = target - now;
+        if (wait > 0) await sleep(wait);
+        await performStep(step, { honorWait: false });
+      }
+    } else {
+      let prevTs = baseTs;
+      const maxCap = options.maxWaitBetweenSteps;
+      for (const step of steps) {
+        let delay = Math.max(0, (step.ts || 0) - prevTs);
+        if (Number.isFinite(maxCap)) delay = Math.min(delay, maxCap);
+        if (delay) await sleep(delay);
+        await performStep(step, { honorWait: true });
+        prevTs = step.ts || prevTs;
+      }
     }
     return { ok: true, steps: steps.length };
   }
 
   window.AlteraReplayer = { replay };
 })();
-

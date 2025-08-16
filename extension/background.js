@@ -333,7 +333,7 @@ async function playLoadedTrace() {
         if (!window.AlteraReplayer) {
           return { ok: false, error: 'Replayer not loaded in page context' };
         }
-        const res = await window.AlteraReplayer.replay(trace, { maxWaitBetweenSteps: 600 });
+        const res = await window.AlteraReplayer.replay(trace, { realTime: true, speed: 1.0 });
         return res;
       } catch (e) {
         return { ok: false, error: (e && e.message) ? e.message : String(e) };
