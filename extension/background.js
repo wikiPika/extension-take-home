@@ -266,7 +266,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     }
     if (message.type === 'replayProgress') {
       const p = message.payload;
-      if (p && p.kind === 'state' && (p.state === 'finished' || p.state === 'stopped')) {
+      if (p && ((p.kind === 'state' && (p.state === 'finished' || p.state === 'stopped')) || p.kind === 'error')) {
         if (inMemory.playback) inMemory.playback.running = false;
       }
       // Forward to panel views

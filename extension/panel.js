@@ -129,6 +129,12 @@
     const pxPerMs = H / dur;
     function tsToTop(ts) { return paddingTop + Math.max(0, Math.min(H, (ts - baseTs) * pxPerMs)); }
     function topToTs(px) { return baseTs + Math.max(0, Math.min(H, (px - paddingTop))) / pxPerMs; }
+    function resetPosition() {
+      if (!tipEl || !lineEl) return;
+      tipEl.style.top = `${paddingTop}px`;
+      lineEl.style.height = `0px`;
+      timelineTime.textContent = '0.00s';
+    }
     // Render events
     steps.forEach((s) => {
       const y = tsToTop(s.ts || 0);
@@ -176,6 +182,7 @@
     });
     // Save helper
     timeline._tsToTop = tsToTop;
+    timeline._resetPos = resetPosition;
   }
 
   function refreshTraces(onDone) {
@@ -291,6 +298,11 @@
         lineEl.style.height = `${top - paddingTop}px`;
         timelineTime.textContent = formatSeconds((p.ts || 0) - (baseTs || 0));
       }
+    } else if (p.kind === 'error') {
+      // Display error and reset UI
+      traceSummary.textContent = `Error during playback: ${p.message || 'unknown error'}`;
+      isPlaying = false; isPaused = false; setPlayPauseUI();
+      if (timeline && typeof timeline._resetPos === 'function') timeline._resetPos();
     }
   });
 

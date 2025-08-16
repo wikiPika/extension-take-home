@@ -70,7 +70,8 @@
       if (!(cur instanceof Element)) break;
       const tag = cur.tagName.toLowerCase();
       const role = cur.getAttribute('role');
-      const isButtonish = tag === 'button' || (tag === 'a' && cur.hasAttribute('href')) || (tag === 'input' && ['button','submit','image'].includes(cur.getAttribute('type')||'')) || role === 'button' || cur.hasAttribute('data-testid');
+      const interactiveRoles = new Set(['button','menuitem','menuitemcheckbox','menuitemradio','option','tab','link']);
+      const isButtonish = tag === 'button' || (tag === 'a' && cur.hasAttribute('href')) || (tag === 'input' && ['button','submit','image'].includes(cur.getAttribute('type')||'')) || (role && interactiveRoles.has(role)) || cur.hasAttribute('data-testid');
       const hasHandler = !!(cur.onclick || cur.onmousedown || cur.onpointerdown || cur.getAttribute('onclick'));
       if (isButtonish || hasHandler) return cur;
       cur = cur.parentElement;
@@ -130,6 +131,37 @@
       ts: nowRel(),
     };
     sendStep(step);
+  }
+
+  // Hover capture with dwell to avoid noise
+  let hoverTimer = null;
+  let hoverCandidate = null;
+  const HOVER_DWELL_MS = 200;
+  function scheduleHover(el, clientX, clientY) {
+    if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+    hoverCandidate = el;
+    hoverTimer = setTimeout(() => {
+      hoverTimer = null;
+      if (!hoverCandidate) return;
+      const rect = hoverCandidate.getBoundingClientRect();
+      const step = {
+        type: 'hover',
+        selectors: selectorsFor(hoverCandidate),
+        x: Math.round(clientX - rect.left),
+        y: Math.round(clientY - rect.top),
+        ts: nowRel()
+      };
+      sendStep(step);
+    }, HOVER_DWELL_MS);
+  }
+  function onMouseOver(ev) {
+    if (!recording) return;
+    const el = nearestClickable(ev.target);
+    scheduleHover(el, ev.clientX, ev.clientY);
+  }
+  function onMouseOut() {
+    if (hoverTimer) { clearTimeout(hoverTimer); hoverTimer = null; }
+    hoverCandidate = null;
   }
 
   function isTextInput(el) {
@@ -419,6 +451,8 @@
     window.addEventListener("change", onChange, true);
     window.addEventListener("blur", onBlur, true);
     window.addEventListener("scroll", onWindowScroll, true);
+    window.addEventListener('mouseover', onMouseOver, true);
+    window.addEventListener('mouseout', onMouseOut, true);
     patchHistory();
   }
 
@@ -435,6 +469,8 @@
     window.removeEventListener("change", onChange, true);
     window.removeEventListener("blur", onBlur, true);
     window.removeEventListener("scroll", onWindowScroll, true);
+    window.removeEventListener('mouseover', onMouseOver, true);
+    window.removeEventListener('mouseout', onMouseOut, true);
     debounces.forEach((t) => clearTimeout(t));
     debounces.clear();
   }

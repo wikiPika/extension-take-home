@@ -64,7 +64,7 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["navigate", "click", "type", "change", "select", "scroll", "wait", "submit"]
+          "enum": ["navigate", "click", "type", "change", "select", "scroll", "wait", "submit", "hover"]
         },
         "ts": { "type": "number", "description": "Milliseconds since recording started (relative ms)" },
         "frame": { "type": "string" },
@@ -167,6 +167,18 @@
             "properties": {
               "formSelectors": { "$ref": "#/$defs/selectors" },
               "submitterSelectors": { "$ref": "#/$defs/selectors" }
+            }
+          }
+        }
+        ,
+        {
+          "if": { "properties": { "type": { "const": "hover" } } },
+          "then": {
+            "required": ["selectors"],
+            "properties": {
+              "selectors": { "$ref": "#/$defs/selectors" },
+              "x": { "type": "number" },
+              "y": { "type": "number" }
             }
           }
         }

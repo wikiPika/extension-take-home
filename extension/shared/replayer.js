@@ -13,48 +13,112 @@
     return rect.width > 0 && rect.height > 0;
   }
 
+  async function waitForElement(selectors, { visible = true, timeout = 3000 } = {}) {
+    const start = performance.now();
+    while (performance.now() - start < timeout) {
+      const el = findElement(selectors);
+      if (el) {
+        if (!visible || isVisible(el)) return el;
+      }
+      await sleep(50);
+    }
+    return null;
+  }
+
+  function allDocumentRoots() {
+    const roots = [document];
+    const stack = [document];
+    while (stack.length) {
+      const root = stack.pop();
+      const nodes = (root === document ? root : root).querySelectorAll('*');
+      for (const n of nodes) {
+        if (n && n.shadowRoot) {
+          roots.push(n.shadowRoot);
+          stack.push(n.shadowRoot);
+        }
+      }
+    }
+    return roots;
+  }
+
+  function deepQuerySelector(selector) {
+    for (const root of allDocumentRoots()) {
+      const el = root.querySelector(selector);
+      if (el) return el;
+    }
+    return null;
+  }
+
   function findByText(root, text) {
-    const walker = document.createTreeWalker(root || document.body, NodeFilter.SHOW_ELEMENT, null);
     const norm = (s) => String(s || "").trim();
     const target = norm(text).toLowerCase();
-    while (walker.nextNode()) {
-      const node = walker.currentNode;
-      const tx = norm(node.textContent).toLowerCase();
-      if (tx.includes(target)) return node;
+    const roots = allDocumentRoots();
+    for (const r of roots) {
+      const walker = document.createTreeWalker(r === document ? document.body || document : r, NodeFilter.SHOW_ELEMENT, null);
+      while (walker.nextNode()) {
+        const node = walker.currentNode;
+        const tx = norm(node.textContent).toLowerCase();
+        if (tx.includes(target)) return node;
+      }
     }
     return null;
   }
 
   function findElement(selectors) {
     if (!selectors || !selectors.length) return null;
+    const possibleText = [];
     for (const sel of selectors) {
       try {
         if (typeof sel === 'string') {
-          const el = document.querySelector(sel);
+          const el = deepQuerySelector(sel);
           if (el) return el;
           continue;
         }
         if (sel && sel.type === 'css') {
-          const el = document.querySelector(sel.value);
+          const el = deepQuerySelector(sel.value);
           if (el) return el;
         } else if (sel && sel.type === 'aria') {
           // Basic ARIA name lookup via aria-label/title text
           const target = String(sel.value || '').toLowerCase();
-          const candidates = document.querySelectorAll('[aria-label], [title], button, [role="button"]');
-          for (const c of candidates) {
-            const name = (c.getAttribute('aria-label') || c.getAttribute('title') || c.textContent || '').trim().toLowerCase();
-            if (name && (name === target || name.includes(target))) return c;
+          const roots = allDocumentRoots();
+          for (const root of roots) {
+            const candidates = (root === document ? document : root).querySelectorAll('[aria-label], [title], button, [role="button"]');
+            for (const c of candidates) {
+              const name = (c.getAttribute('aria-label') || c.getAttribute('title') || c.textContent || '').trim().toLowerCase();
+              if (name && (name === target || name.includes(target))) return c;
+            }
           }
         } else if (sel && sel.type === 'text') {
           const el = findByText(document, sel.value);
           if (el) return el;
+          if (sel.value) possibleText.push(String(sel.value));
         } else if (sel && sel.type === 'xpath') {
-          const result = document.evaluate(sel.value, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          // Evaluate in each root; XPath won't pierce shadow DOM but try main document first
+          const tryIn = (root) => document.evaluate(sel.value, root, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          let result = tryIn(document);
           if (result.singleNodeValue) return result.singleNodeValue;
+          for (const root of allDocumentRoots()) {
+            result = tryIn(root);
+            if (result.singleNodeValue) return result.singleNodeValue;
+          }
         }
         // aria locators not implemented yet
       } catch (e) {
         // ignore selector errors
+      }
+    }
+    // Fallback: role-based lookup by text across roots
+    if (possibleText.length) {
+      const target = possibleText[0].toLowerCase();
+      const roles = ['menuitem','menuitemcheckbox','menuitemradio','button','option','tab','link'];
+      for (const root of allDocumentRoots()) {
+        for (const role of roles) {
+          const nodes = (root === document ? document : root).querySelectorAll(`[role="${role}"]`);
+          for (const n of nodes) {
+            const name = (n.getAttribute('aria-label') || n.textContent || '').trim().toLowerCase();
+            if (name && (name === target || name.includes(target))) return n;
+          }
+        }
       }
     }
     return null;
@@ -79,6 +143,64 @@
       await sleep(100);
     }
     throw new Error(`Timeout waiting for selector (${typeof selector === 'string' ? selector : JSON.stringify(selector)})`);
+  }
+
+  let lastHoverEl = null;
+  function ancestors(el) {
+    const list = [];
+    let cur = el;
+    while (cur && cur !== document && cur !== document.documentElement) {
+      list.push(cur);
+      cur = cur.parentNode && cur.parentNode.nodeType === 1 ? cur.parentNode : (cur.getRootNode && cur.getRootNode().host) || null;
+    }
+    return list;
+  }
+
+  const INTERACTIVE_ROLES = new Set(['button','menuitem','menuitemcheckbox','menuitemradio','option','tab','link']);
+  function nearestInteractive(el) {
+    let cur = el;
+    while (cur && cur !== document && cur !== document.documentElement) {
+      if (cur.getAttribute) {
+        const role = cur.getAttribute('role');
+        if (role && INTERACTIVE_ROLES.has(role)) return cur;
+        const tag = (cur.tagName || '').toLowerCase();
+        if (tag === 'button' || (tag === 'a' && cur.hasAttribute('href'))) return cur;
+      }
+    // climb composed tree through shadow host if needed
+      cur = cur.parentNode && cur.parentNode.nodeType === 1 ? cur.parentNode : (cur.getRootNode && cur.getRootNode().host) || null;
+    }
+    return el;
+  }
+  function dispatchHover(el, x, y) {
+    const rect = el.getBoundingClientRect();
+    const clientX = rect.left + (typeof x === 'number' ? x : rect.width / 2);
+    const clientY = rect.top + (typeof y === 'number' ? y : rect.height / 2);
+    const common = { bubbles: true, cancelable: true, composed: true, clientX, clientY };
+    const prevChain = lastHoverEl ? ancestors(lastHoverEl) : [];
+    const nextChain = ancestors(el);
+    // Out events for elements not in next chain
+    for (const node of prevChain) {
+      if (!nextChain.includes(node)) {
+        node.dispatchEvent(new PointerEvent('pointerout', { ...common, pointerType: 'mouse' }));
+        node.dispatchEvent(new MouseEvent('mouseout', common));
+        node.dispatchEvent(new PointerEvent('pointerleave', { ...common, pointerType: 'mouse' }));
+        node.dispatchEvent(new MouseEvent('mouseleave', common));
+      }
+    }
+    // Over/enter for new chain (from root to target)
+    for (let i = nextChain.length - 1; i >= 0; i--) {
+      const node = nextChain[i];
+      if (!prevChain.includes(node)) {
+        node.dispatchEvent(new PointerEvent('pointerover', { ...common, pointerType: 'mouse' }));
+        node.dispatchEvent(new MouseEvent('mouseover', common));
+        node.dispatchEvent(new PointerEvent('pointerenter', { ...common, pointerType: 'mouse' }));
+        node.dispatchEvent(new MouseEvent('mouseenter', common));
+      }
+    }
+    // Move on target
+    el.dispatchEvent(new PointerEvent('pointermove', { ...common, pointerType: 'mouse' }));
+    el.dispatchEvent(new MouseEvent('mousemove', common));
+    lastHoverEl = el;
   }
 
   async function performStep(step, opts = {}) {
@@ -120,21 +242,49 @@
       }
       return;
     }
+    if (type === 'hover') {
+      let el = await waitForElement(step.selectors, { visible: true, timeout: 3000 });
+      if (!el) throw new Error('hover target not found');
+      const target = nearestInteractive(el) || el;
+      target.scrollIntoView({ block: 'center', inline: 'center' });
+      dispatchHover(target, step.x, step.y);
+      // If this is a menu trigger (has submenu), wait for its controlled menu to appear
+      const hasPopup = target.getAttribute && target.getAttribute('aria-haspopup') === 'menu';
+      const controlsId = target.getAttribute ? target.getAttribute('aria-controls') : null;
+      if (hasPopup && controlsId) {
+        // Try to wait for the submenu root
+        const cssId = '#' + (window.CSS && CSS.escape ? CSS.escape(controlsId) : controlsId.replace(/([ #;?%&,.+*~\':"!^$\[\]()=>|\/])/g,'\\$1'));
+        await waitForElement([{ type:'css', value: cssId }], { visible: true, timeout: 2000 }).catch(() => {});
+      } else {
+        await sleep(200);
+      }
+      return;
+    }
     if (type === 'click') {
-      const el = findElement(step.selectors);
+      let el = await waitForElement(step.selectors, { visible: true, timeout: 3000 });
       if (!el) throw new Error('click target not found');
-      el.scrollIntoView({ block: 'center', inline: 'center' });
+      const target = nearestInteractive(el) || el;
+      target.scrollIntoView({ block: 'center', inline: 'center' });
+      // Ensure hover preconditions to trigger popovers/menus
+      dispatchHover(target, step.x, step.y);
+      await sleep(100);
       if (typeof step.x === 'number' && typeof step.y === 'number') {
-        const rect = el.getBoundingClientRect();
+        const rect = target.getBoundingClientRect();
         const clientX = rect.left + step.x;
         const clientY = rect.top + step.y;
         const opts = { bubbles: true, cancelable: true, composed: true, clientX, clientY, button: (step.button === 'right' ? 2 : step.button === 'middle' ? 1 : 0) };
-        el.dispatchEvent(new MouseEvent('mousemove', opts));
-        el.dispatchEvent(new MouseEvent('mousedown', opts));
-        el.dispatchEvent(new MouseEvent('mouseup', opts));
-        el.dispatchEvent(new MouseEvent('click', opts));
+        target.dispatchEvent(new PointerEvent('pointerdown', { ...opts, pointerType: 'mouse' }));
+        target.dispatchEvent(new MouseEvent('mousemove', opts));
+        target.dispatchEvent(new MouseEvent('mousedown', opts));
+        target.dispatchEvent(new MouseEvent('mouseup', opts));
+        target.dispatchEvent(new PointerEvent('pointerup', { ...opts, pointerType: 'mouse' }));
+        target.dispatchEvent(new MouseEvent('click', opts));
       } else {
-        el.click();
+        target.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true, composed: true, pointerType: 'mouse' }));
+        target.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, composed: true }));
+        target.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true, composed: true }));
+        target.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, cancelable: true, composed: true, pointerType: 'mouse' }));
+        target.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, composed: true }));
       }
       return;
     }
@@ -258,32 +408,41 @@
     ctrlState.startWall = performance.now();
     emit('state', { state: 'started', baseTs: ctrlState.baseTs, endTs: ctrlState.endTs });
 
-    while (ctrlState.playing && ctrlState.idx < steps.length) {
-      const step = steps[ctrlState.idx];
-      const target = ctrlState.startWall + ((Math.max(0, (step.ts || 0) - ctrlState.baseTs)) / ctrlState.speed);
-      while (ctrlState.playing) {
-        if (ctrlState.paused) { await sleep(50); continue; }
-        const now = performance.now();
-        const wait = target - now;
-        // Emit smooth progress ticks while waiting for next step
-        const curTs = ctrlState.baseTs + Math.max(0, (now - ctrlState.startWall)) * ctrlState.speed;
-        ctrlState.currentTs = Math.min(curTs, ctrlState.endTs);
+    try {
+      while (ctrlState.playing && ctrlState.idx < steps.length) {
+        const step = steps[ctrlState.idx];
+        const target = ctrlState.startWall + ((Math.max(0, (step.ts || 0) - ctrlState.baseTs)) / ctrlState.speed);
+        while (ctrlState.playing) {
+          if (ctrlState.paused) { await sleep(50); continue; }
+          const now = performance.now();
+          const wait = target - now;
+          // Emit smooth progress ticks while waiting for next step
+          const curTs = ctrlState.baseTs + Math.max(0, (now - ctrlState.startWall)) * ctrlState.speed;
+          ctrlState.currentTs = Math.min(curTs, ctrlState.endTs);
+          emit('progress', { ts: ctrlState.currentTs, idx: ctrlState.idx, endTs: ctrlState.endTs });
+          if (wait > 5) { await sleep(Math.min(wait, 50)); continue; }
+          break;
+        }
+        if (!ctrlState.playing) break;
+        await performStep(step, { honorWait: false });
+        ctrlState.currentTs = step.ts || ctrlState.currentTs;
         emit('progress', { ts: ctrlState.currentTs, idx: ctrlState.idx, endTs: ctrlState.endTs });
-        if (wait > 5) { await sleep(Math.min(wait, 50)); continue; }
-        break;
+        ctrlState.idx += 1;
       }
-      if (!ctrlState.playing) break;
-      await performStep(step, { honorWait: false });
-      ctrlState.currentTs = step.ts || ctrlState.currentTs;
-      emit('progress', { ts: ctrlState.currentTs, idx: ctrlState.idx, endTs: ctrlState.endTs });
-      ctrlState.idx += 1;
+      // Final progress to end
+      emit('progress', { ts: ctrlState.endTs, idx: ctrlState.idx, endTs: ctrlState.endTs });
+      const finished = ctrlState.idx >= steps.length;
+      ctrlState.playing = false;
+      emit('state', { state: finished ? 'finished' : 'stopped' });
+      return { ok: true, steps: steps.length, finished };
+    } catch (e) {
+      const msg = (e && e.message) ? e.message : String(e);
+      ctrlState.playing = false;
+      ctrlState.paused = false;
+      emit('error', { message: msg, idx: ctrlState.idx, ts: ctrlState.currentTs });
+      emit('state', { state: 'stopped' });
+      return { ok: false, error: msg };
     }
-    // Final progress to end
-    emit('progress', { ts: ctrlState.endTs, idx: ctrlState.idx, endTs: ctrlState.endTs });
-    const finished = ctrlState.idx >= steps.length;
-    ctrlState.playing = false;
-    emit('state', { state: finished ? 'finished' : 'stopped' });
-    return { ok: true, steps: steps.length, finished };
   }
 
   function pause() {
