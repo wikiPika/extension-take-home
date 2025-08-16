@@ -4,7 +4,7 @@
   let startedAtMs = 0; // epoch ms at recording start, consistent across navigations
   let recordedFirstNavigate = false;
   const debounces = new Map(); // element -> { timer, last }
-  const TYPE_MIN_INTERVAL_MS = 1000;
+  const TYPE_MIN_INTERVAL_MS = 33;
   let suppressScrollUntil = 0;
 
   const nowRel = () => {
