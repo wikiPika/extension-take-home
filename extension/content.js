@@ -139,12 +139,12 @@
   }
 
   // Drag detection
-  let dragStart = null; // {el, clientX, clientY, ts, button, path: [{x,y,dt}]}
+  let dragStart = null; // {el, clientX, clientY, ts, button, path: [{x,y,dt}], maxDist2}
   let suppressClickUntil = 0;
   function onMouseDown(ev) {
     if (!recording) return;
     if (ev.button !== 0) return;
-    dragStart = { el: ev.target, clientX: ev.clientX, clientY: ev.clientY, ts: nowRel(), button: 'left', path: [] };
+    dragStart = { el: ev.target, clientX: ev.clientX, clientY: ev.clientY, ts: nowRel(), button: 'left', path: [], maxDist2: 0 };
   }
   const DRAG_SAMPLE_MS = 16;
   let lastDragSampleAt = 0;
@@ -153,6 +153,10 @@
     const now = nowRel();
     if (now - lastDragSampleAt < DRAG_SAMPLE_MS) return;
     dragStart.path.push({ x: ev.clientX, y: ev.clientY, dt: now - dragStart.ts });
+    const dx0 = ev.clientX - dragStart.clientX;
+    const dy0 = ev.clientY - dragStart.clientY;
+    const d02 = dx0 * dx0 + dy0 * dy0;
+    if (d02 > dragStart.maxDist2) dragStart.maxDist2 = d02;
     lastDragSampleAt = now;
   }
   function onMouseUp(ev) {
@@ -161,7 +165,8 @@
     const dx = ev.clientX - dragStart.clientX;
     const dy = ev.clientY - dragStart.clientY;
     const dist2 = dx * dx + dy * dy;
-    if (dist2 > 25) {
+    const movedEnough = dist2 > 25 || (dragStart.maxDist2 && dragStart.maxDist2 > 25);
+    if (movedEnough) {
       // Consider as drag if moved > 5px
       const startEl = dragStart.el instanceof Element ? dragStart.el : document.body;
       const step = {
