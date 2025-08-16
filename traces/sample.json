@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "createdAt": "2025-08-16T22:40:00.000Z",
+  "baseUrl": "https://example.com",
+  "metadata": {
+    "userAgent": "Mozilla/5.0",
+    "viewport": { "width": 1280, "height": 800 }
+  },
+  "steps": [
+    { "type": "navigate", "url": "https://example.com", "ts": 0 },
+    { "type": "wait", "for": { "selector": "h1", "state": "visible" }, "ts": 1000 },
+    {
+      "type": "click",
+      "selectors": [
+        { "type": "css", "value": "a.more-information" },
+        "a[href='https://www.iana.org/domains/reserved']"
+      ],
+      "button": "left",
+      "ts": 2000
+      },
+    { "type": "scroll", "target": "window", "x": 0, "y": 800, "ts": 3000 },
+    {
+      "type": "type",
+      "selectors": ["#search"],
+      "text": "hello world",
+      "ts": 4000
+    },
+    { "type": "wait", "for": { "ms": 500 }, "ts": 4500 }
+  ]
+}
