@@ -4,11 +4,11 @@
   "version": "0.1.0",
   "description": "Record and replay user actions. (Scaffold)",
   "action": {
-    "default_title": "Altera Recorder",
-    "default_popup": "popup.html"
+    "default_title": "Altera Recorder"
   },
   "background": {
     "service_worker": "background.js"
   },
-  "permissions": ["downloads", "storage", "tabs"]
+  "permissions": ["downloads", "storage", "tabs", "scripting", "activeTab", "windows"],
+  "host_permissions": ["<all_urls>"]
 }

@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Altera Recorder — Panel</title>
+    <style>
+      :root { color-scheme: light; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; padding: 12px; min-width: 360px; }
+      h1 { font-size: 14px; margin: 0 0 8px; }
+      .row { display: flex; gap: 8px; margin-bottom: 6px; }
+      button { padding: 8px 10px; font-size: 13px; border-radius: 6px; border: 1px solid #ccc; cursor: pointer; }
+      button.start { background: #e6f7ff; border-color: #91d5ff; }
+      button.stop { background: #fff1f0; border-color: #ffa39e; }
+      select { flex: 1; padding: 6px; }
+      .status { margin-top: 8px; font-size: 12px; opacity: 0.8; white-space: pre-wrap; }
+      hr { margin: 10px 0; }
+    </style>
+  </head>
+  <body>
+    <h1>Altera Recorder (Panel)</h1>
+    <div class="row">
+      <button id="startBtn" class="start">Start</button>
+      <button id="stopBtn" class="stop">Stop</button>
+    </div>
+    <div id="status" class="status">Idle</div>
+    <hr />
+    <h1>Load Trace</h1>
+    <div class="row" style="align-items: center;">
+      <select id="traceSelect">
+        <option value="">-- Select a trace from Downloads/traces --</option>
+      </select>
+      <button id="refreshBtn" title="Refresh">⟳</button>
+      <button id="loadBtn">Load</button>
+      <button id="playBtn" title="Play loaded trace">Play</button>
+    </div>
+    <div id="traceSummary" class="status"></div>
+    <script src="panel.js"></script>
+  </body>
+  </html>

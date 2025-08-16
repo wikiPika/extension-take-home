@@ -7,6 +7,7 @@
   const refreshBtn = $("refreshBtn");
   const loadBtn = $("loadBtn");
   const traceSummary = $("traceSummary");
+  const playBtn = $("playBtn");
 
   startBtn.addEventListener("click", () => {
     chrome.runtime.sendMessage({ type: "start" }, (res) => {
@@ -37,7 +38,6 @@
   });
 
   function populateTraces(list) {
-    // Clear all options except placeholder
     while (traceSelect.options.length > 1) traceSelect.remove(1);
     for (const it of list) {
       const opt = document.createElement("option");
@@ -93,7 +93,6 @@
       if (res && res.ok) {
         const summary = summarizeTrace(res.trace);
         traceSummary.textContent = summary;
-        // Optionally store in session for later replay
         chrome.storage.session && chrome.storage.session.set({ loadedTrace: res.trace });
       } else {
         traceSummary.textContent = `Failed to load trace: ${res && res.error ? res.error : 'unknown'}`;
@@ -101,6 +100,22 @@
     });
   });
 
+  playBtn.addEventListener("click", () => {
+    traceSummary.textContent = "Playing trace...";
+    chrome.runtime.sendMessage({ type: "playLoadedTrace" }, (res) => {
+      if (chrome.runtime.lastError) {
+        traceSummary.textContent = `Error: ${chrome.runtime.lastError.message}`;
+        return;
+      }
+      if (res && res.ok) {
+        traceSummary.textContent = res.message || "Playback finished.";
+      } else {
+        traceSummary.textContent = `Failed to play: ${res && res.error ? res.error : 'unknown'}`;
+      }
+    });
+  });
+
   // Initial load
   refreshTraces();
 })();
+
