@@ -2,7 +2,7 @@ import argparse
 import json
 import os
 import sys
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 
 
 ALLOWED_STEP_TYPES = {
@@ -143,21 +143,174 @@ def summarize_trace(trace: Dict[str, Any]) -> str:
     return "\n".join(parts)
 
 
+def segment_by_navigation(trace: Dict[str, Any]) -> Tuple[str, List[Dict[str, Any]]]:
+    steps = sorted(trace.get("steps", []), key=lambda s: s.get("ts", 0))
+    start_url = trace.get("startUrl")
+    # Find first navigate url if no startUrl
+    if not start_url:
+        for s in steps:
+            if s.get("type") == "navigate" and isinstance(s.get("url"), str):
+                start_url = s["url"]
+                break
+    # Build segments: [(url, [steps_without_navigate])]
+    segments: List[Dict[str, Any]] = []
+    current_url = start_url
+    current_steps: List[Dict[str, Any]] = []
+    for s in steps:
+        if s.get("type") == "navigate" and isinstance(s.get("url"), str):
+            # flush current segment
+            if current_steps:
+                segments.append({"url": current_url, "steps": current_steps})
+                current_steps = []
+            current_url = s["url"]
+            continue
+        current_steps.append(s)
+    if current_steps:
+        segments.append({"url": current_url, "steps": current_steps})
+    return start_url or "about:blank", segments
+
+
+def rebase_steps(steps: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if not steps:
+        return []
+    base = steps[0].get("ts", 0) or 0
+    rebased = []
+    for s in steps:
+        s2 = dict(s)
+        s2["ts"] = (s.get("ts", 0) or 0) - base
+        rebased.append(s2)
+    return rebased
+
+
+def run_playback(trace: Dict[str, Any], verbose: bool = False) -> int:
+    try:
+        from playwright.sync_api import sync_playwright
+    except Exception as e:
+        print("Playwright is required. Install with: pip install playwright && playwright install", file=sys.stderr)
+        print(f"Import error: {e}", file=sys.stderr)
+        return 2
+
+    # Load reusable replayer script from the extension folder
+    here = os.path.dirname(os.path.abspath(__file__))
+    replayer_path = os.path.join(here, "extension", "shared", "replayer.js")
+    if not os.path.exists(replayer_path):
+        print(f"Could not find replayer script at {replayer_path}", file=sys.stderr)
+        return 2
+    with open(replayer_path, "r", encoding="utf-8") as f:
+        replayer_js = f.read()
+
+    progress_js = """
+      (function(){
+        try {
+          window.addEventListener('message', function(ev){
+            var d = ev && ev.data; if (!d || !d.__altera) return;
+            try { console.log('[altera] ' + JSON.stringify(d)); } catch {}
+            if (d.kind === 'state' && (d.state === 'finished' || d.state === 'stopped')) {
+              window.__alteraDone = true;
+            }
+          });
+        } catch (e) {}
+      })();
+    """
+
+    start_url, segments = segment_by_navigation(trace)
+    if not start_url:
+        start_url = "about:blank"
+
+    if verbose:
+        print(f"Starting URL: {start_url}")
+        print(f"Segments: {len(segments)}")
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        context = browser.new_context()
+        page = context.new_page()
+        # Ensure scripts are injected on every navigation (CSP-safe)
+        page.add_init_script(script=replayer_js)
+        page.add_init_script(script=progress_js)
+
+        # Verbose console relay
+        console_handler = None
+        if verbose:
+            def on_console(msg):
+                try:
+                    # Playwright versions differ: text may be a property or a method
+                    txt_attr = getattr(msg, "text", None)
+                    txt = txt_attr() if callable(txt_attr) else (txt_attr if isinstance(txt_attr, str) else str(msg))
+                except Exception:
+                    txt = str(msg)
+                if isinstance(txt, str) and txt.startswith('[altera]'):
+                    print(txt)
+            console_handler = on_console
+            page.on("console", console_handler)
+
+        # Navigate to the first URL
+        page.goto(start_url, wait_until="load")
+        # UX: give the page a moment to settle resources
+        page.wait_for_timeout(1000)
+
+        # Play each segment (rebased timestamps)
+        for idx, seg in enumerate(segments):
+            if seg.get("url") and page.url != seg["url"]:
+                if verbose:
+                    print(f"Navigating to segment[{idx}] URL: {seg['url']}")
+                page.goto(seg["url"], wait_until="load")
+            steps = rebase_steps(seg.get("steps", []))
+            if not steps:
+                continue
+            if verbose:
+                print(f"Playing segment[{idx}] with {len(steps)} steps")
+                # Pretty-print the schedule: "  3.40s - type"
+                last_ts = steps[-1].get("ts", 0) if steps else 0
+                # width includes "s" at end
+                width = max(len(f"{(last_ts/1000):.2f}s"), 7)
+                for s in steps:
+                    t_sec = f"{(s.get('ts', 0)/1000):.2f}s"
+                    t_field = t_sec.rjust(width)
+                    name = s.get("type", "unknown")
+                    print(f"  {t_field} - {name}")
+            # Execute controlled replay in-page and wait for it to finish
+            result = page.evaluate(
+                "trace => (window.AlteraReplayer ? window.AlteraReplayer.replay(trace, { realTime: true, speed: 1.0 }) : { ok:false, error:'replayer missing' })",
+                {"steps": steps},
+            )
+            if verbose:
+                print(f"Segment[{idx}] result: {result}")
+
+        if verbose:
+            print("All segments played.")
+        # UX: Keep the browser open until the user chooses to exit
+        print("Replay complete. Browser will remain open. Press Enter to close and exit...")
+        try:
+            input()
+        except (KeyboardInterrupt, EOFError):
+            pass
+        finally:
+            try:
+                if console_handler is not None:
+                    # Best-effort detach to avoid teardown errors
+                    page.off("console", console_handler)  # type: ignore[attr-defined]
+            except Exception:
+                pass
+            try:
+                browser.close()
+            except Exception:
+                pass
+        return 0
+
+
 def main(argv: List[str]) -> int:
-    parser = argparse.ArgumentParser(description="Validate and summarize an action trace JSON.")
-    parser.add_argument(
-        "--trace",
-        default=os.path.join("traces", "sample.json"),
-        help="Path to the trace JSON file.",
-    )
+    parser = argparse.ArgumentParser(description="Replay an action trace in Chromium using Playwright.")
+    parser.add_argument("--file", required=True, help="Path to the trace JSON file.")
+    parser.add_argument("-v", action="store_true", dest="verbose", help="Verbose: print replay progress.")
     args = parser.parse_args(argv)
 
-    if not os.path.exists(args.trace):
-        print(f"Trace file not found: {args.trace}", file=sys.stderr)
+    if not os.path.exists(args.file):
+        print(f"Trace file not found: {args.file}", file=sys.stderr)
         return 2
 
     try:
-        trace = load_trace(args.trace)
+        trace = load_trace(args.file)
     except json.JSONDecodeError as e:
         print(f"Failed to parse JSON: {e}", file=sys.stderr)
         return 2
@@ -169,16 +322,9 @@ def main(argv: List[str]) -> int:
             print(f"- {err}")
         return 1
 
-    # Normalize timestamps relative to the first step.
-    normalized = normalize_timestamps(trace)
-    if normalized.get("_normalizedTsShift"):
-        print(f"Note: normalized timestamps by subtracting {int(normalized['_normalizedTsShift'])} ms.")
-    if normalized.get("_sortedByTs"):
-        print("Note: steps were sorted by timestamp to be non-decreasing.")
-
-    print("Trace looks valid.\n")
-    print(summarize_trace(trace))
-    return 0
+    # Normalize timestamps to ensure non-decreasing and relative
+    normalize_timestamps(trace)
+    return run_playback(trace, verbose=args.verbose)
 
 
 if __name__ == "__main__":
