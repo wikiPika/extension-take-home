@@ -272,8 +272,8 @@ async function ensureOnStartSite(trace, tabId) {
   try {
     const want = trace.startOrigin || trace.baseUrl;
     if (!want) return { ok: true };
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab || tab.id !== tabId) return { ok: false, error: 'Active tab changed' };
+    const tab = await chrome.tabs.get(tabId);
+    if (!tab) return { ok: false, error: 'Target tab not found' };
     const curUrl = tab.url || '';
     const curOrigin = (() => { try { return new URL(curUrl).origin; } catch { return null; } })();
     if (curOrigin === want) return { ok: true };
@@ -283,7 +283,7 @@ async function ensureOnStartSite(trace, tabId) {
         const timeout = setTimeout(() => {
           chrome.tabs.onUpdated.removeListener(listener);
           reject(new Error('Navigation timeout'));
-        }, 15000);
+        }, 20000);
         const listener = (id, info) => {
           if (id === tabId && info.status === 'complete') {
             clearTimeout(timeout);
@@ -322,14 +322,24 @@ async function playLoadedTrace() {
   if (!loadedTrace) return { ok: false, error: 'No loaded trace in session' };
   const siteOk = await ensureOnStartSite(loadedTrace, tid);
   if (!siteOk.ok) return siteOk;
-  // Inject the shared replayer file
-  await chrome.scripting.executeScript({ target: { tabId: tid }, files: ["shared/replayer.js"] });
-  // Execute the replay in the page context
+  // Inject the shared replayer file into the MAIN world so window.AlteraReplayer is accessible
+  await chrome.scripting.executeScript({ target: { tabId: tid }, files: ["shared/replayer.js"], world: 'MAIN' });
+  // Execute the replay in the page context and surface any thrown errors
   const [{ result }] = await chrome.scripting.executeScript({
     target: { tabId: tid },
-    func: (trace) => window.AlteraReplayer && window.AlteraReplayer.replay(trace, { maxWaitBetweenSteps: 600 }),
-    args: [loadedTrace],
-    world: 'MAIN'
+    world: 'MAIN',
+    func: async (trace) => {
+      try {
+        if (!window.AlteraReplayer) {
+          return { ok: false, error: 'Replayer not loaded in page context' };
+        }
+        const res = await window.AlteraReplayer.replay(trace, { maxWaitBetweenSteps: 600 });
+        return res;
+      } catch (e) {
+        return { ok: false, error: (e && e.message) ? e.message : String(e) };
+      }
+    },
+    args: [loadedTrace]
   });
   return result || { ok: false, error: 'Unknown error during replay' };
 }

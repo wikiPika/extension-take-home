@@ -5,7 +5,7 @@
   const stopBtn = $("stopBtn");
   const traceSelect = $("traceSelect");
   const refreshBtn = $("refreshBtn");
-  const loadBtn = $("loadBtn");
+  const clearBtn = $("clearBtn");
   const traceSummary = $("traceSummary");
   const playBtn = $("playBtn");
 
@@ -31,6 +31,22 @@
       }
       if (res && res.ok) {
         status.textContent = `Trace saved to ${res.filename}`;
+        // Auto-refresh traces and select the new one
+        const downloadId = res.downloadId;
+        const filename = res.filename;
+        refreshTraces((traces) => {
+          let match = null;
+          if (typeof downloadId === 'number') {
+            match = (traces || []).find((t) => t.id === downloadId);
+          }
+          if (!match && filename) {
+            match = (traces || []).find((t) => t.displayName === filename.split('/').pop());
+          }
+          if (match) {
+            traceSelect.value = String(match.id);
+            loadSelectedTrace();
+          }
+        });
       } else {
         status.textContent = `Failed to save: ${res && res.error ? res.error : "unknown"}`;
       }
@@ -62,42 +78,68 @@
     return parts.join("\n");
   }
 
-  function refreshTraces() {
+  function refreshTraces(onDone) {
     chrome.runtime.sendMessage({ type: "listTraces" }, (res) => {
       if (chrome.runtime.lastError) {
         traceSummary.textContent = `Error: ${chrome.runtime.lastError.message}`;
+        if (onDone) onDone([]);
         return;
       }
       if (res && res.ok) {
         populateTraces(res.traces || []);
         traceSummary.textContent = `Found ${res.traces?.length || 0} trace(s).`;
+        if (onDone) onDone(res.traces || []);
       } else {
         traceSummary.textContent = `Failed to list traces: ${res && res.error ? res.error : 'unknown'}`;
+        if (onDone) onDone([]);
       }
     });
   }
 
   refreshBtn.addEventListener("click", refreshTraces);
 
-  loadBtn.addEventListener("click", () => {
+  function setPlayEnabled(enabled) {
+    if (enabled) {
+      playBtn.removeAttribute('disabled');
+    } else {
+      playBtn.setAttribute('disabled', 'true');
+    }
+  }
+
+  function loadSelectedTrace() {
     const id = Number(traceSelect.value);
     if (!id) {
-      traceSummary.textContent = "Please select a trace first.";
+      setPlayEnabled(false);
       return;
     }
     chrome.runtime.sendMessage({ type: "loadTrace", id }, (res) => {
       if (chrome.runtime.lastError) {
         traceSummary.textContent = `Error: ${chrome.runtime.lastError.message}`;
+        setPlayEnabled(false);
         return;
       }
       if (res && res.ok) {
         const summary = summarizeTrace(res.trace);
         traceSummary.textContent = summary;
-        chrome.storage.session && chrome.storage.session.set({ loadedTrace: res.trace });
+        if (chrome.storage.session) chrome.storage.session.set({ loadedTrace: res.trace });
+        else chrome.storage.local.set({ loadedTrace: res.trace });
+        setPlayEnabled(true);
       } else {
         traceSummary.textContent = `Failed to load trace: ${res && res.error ? res.error : 'unknown'}`;
+        setPlayEnabled(false);
       }
     });
+  }
+
+  traceSelect.addEventListener('change', loadSelectedTrace);
+
+  clearBtn.addEventListener('click', () => {
+    // Clear loaded trace and UI
+    if (chrome.storage.session) chrome.storage.session.remove('loadedTrace');
+    else chrome.storage.local.remove('loadedTrace');
+    traceSelect.value = '';
+    traceSummary.textContent = 'Cleared loaded trace.';
+    setPlayEnabled(false);
   });
 
   playBtn.addEventListener("click", () => {
@@ -116,6 +158,6 @@
   });
 
   // Initial load
+  setPlayEnabled(false);
   refreshTraces();
 })();
-
