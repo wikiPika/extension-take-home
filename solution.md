@@ -40,4 +40,4 @@ I tried simulating a conversation (just in general) but Chromium (what Playwrigh
 
 ### Most Things Don't Work Either
 
-Everything triggers some captcha or some "you're using a robot to automate things noooooo" so I found soe 
+Everything triggers some captcha or some "you're using a robot to automate things noooooo" so I found some websites that don't get tripped by Playwright
